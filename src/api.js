@@ -298,6 +298,86 @@ export const api = {
       throw new Error(err.error || 'Failed to purge item');
     }
     return res.json();
+  },
+
+  // Vehicle Direct Sales
+  async getVehicles() {
+    const res = await fetch(`${API_BASE}/vehicles`);
+    return res.json();
+  },
+  async createVehicle(vehicleData) {
+    const res = await fetch(`${API_BASE}/vehicles`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(vehicleData)
+    });
+    return res.json();
+  },
+  async updateVehicle(id, vehicleData) {
+    const res = await fetch(`${API_BASE}/vehicles/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(vehicleData)
+    });
+    return res.json();
+  },
+  async deleteVehicle(id) {
+    const res = await fetch(`${API_BASE}/vehicles/${id}`, {
+      method: 'DELETE'
+    });
+    return res.json();
+  },
+  async getVehicleStock() {
+    const res = await fetch(`${API_BASE}/vehicles/stock`);
+    return res.json();
+  },
+  async getVehicleDispatches() {
+    const res = await fetch(`${API_BASE}/vehicles/dispatches`);
+    return res.json();
+  },
+  async dispatchVehicleStock(dispatchData) {
+    const res = await fetch(`${API_BASE}/vehicles/dispatch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dispatchData)
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to dispatch vehicle stock');
+    }
+    return res.json();
+  },
+  async getVehicleSales() {
+    const res = await fetch(`${API_BASE}/vehicles/sales`);
+    return res.json();
+  },
+  async createVehicleSale(saleData) {
+    const res = await fetch(`${API_BASE}/vehicles/sales`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(saleData)
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to record direct sale');
+    }
+    return res.json();
+  },
+  async getVehicleReconciliations() {
+    const res = await fetch(`${API_BASE}/vehicles/reconciliations`);
+    return res.json();
+  },
+  async reconcileVehicleStock(reconcileData) {
+    const res = await fetch(`${API_BASE}/vehicles/reconcile`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(reconcileData)
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to reconcile vehicle stock');
+    }
+    return res.json();
   }
 };
 export default api;

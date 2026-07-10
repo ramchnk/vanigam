@@ -230,7 +230,7 @@
       "shop_type": "retail",
       "route_id": "r1",
       "status": "active",
-      "outstanding_amount": 100
+      "outstanding_amount": 200100
     },
     {
       "id": "s_1_11",
@@ -243,7 +243,7 @@
       "shop_type": "retail",
       "route_id": "r1",
       "status": "active",
-      "outstanding_amount": 0
+      "outstanding_amount": 211
     },
     {
       "id": "s_1_12",
@@ -3364,7 +3364,7 @@
       "purchase_price": 80,
       "wholesale_price": 90,
       "retail_price": 100,
-      "current_stock_bottles": 125,
+      "current_stock_bottles": 36,
       "min_stock": 18,
       "status": "active"
     },
@@ -3378,7 +3378,7 @@
       "purchase_price": 30,
       "wholesale_price": 35,
       "retail_price": 40,
-      "current_stock_bottles": 115,
+      "current_stock_bottles": 47,
       "min_stock": 48,
       "status": "active"
     },
@@ -3406,7 +3406,7 @@
       "purchase_price": 80,
       "wholesale_price": 90,
       "retail_price": 100,
-      "current_stock_bottles": 17,
+      "current_stock_bottles": 25,
       "min_stock": 18,
       "status": "active"
     },
@@ -3457,6 +3457,24 @@
       "cases": 5,
       "bottles": 0,
       "purchase_price": 80
+    },
+    {
+      "id": "purch_1783260363922",
+      "supplier": "Temp Supplier",
+      "purchase_date": "2026-07-05T00:00:00.000Z",
+      "product_id": "p4",
+      "cases": 1,
+      "bottles": 0,
+      "purchase_price": 80
+    },
+    {
+      "id": "purch_1783626490872",
+      "supplier": "Coca Cola Chennai",
+      "purchase_date": "2026-07-09T00:00:00.000Z",
+      "product_id": "p1",
+      "cases": 10,
+      "bottles": 0,
+      "purchase_price": 500
     }
   ],
   "stock_ledger": [
@@ -3587,29 +3605,115 @@
       "timestamp": "2026-07-05T14:15:30.008Z"
     },
     {
-      "id": "sl_1783263712476_del",
-      "product_id": "p4",
-      "transaction_type": "purchase_cancel",
+      "id": "sl_1783315926749_p1",
+      "product_id": "p1",
+      "transaction_type": "sale",
+      "cases_change": -10,
+      "bottles_change": -10,
+      "running_stock_bottles": 25,
+      "timestamp": "2026-07-06T05:32:06.749Z"
+    },
+    {
+      "id": "sl_1783344968508_p1",
+      "product_id": "p1",
+      "transaction_type": "sale",
       "cases_change": -1,
+      "bottles_change": -10,
+      "running_stock_bottles": 6,
+      "timestamp": "2026-07-06T13:36:08.508Z"
+    },
+    {
+      "id": "sl_1783344968508_p2",
+      "product_id": "p2",
+      "transaction_type": "sale",
+      "cases_change": -1,
+      "bottles_change": -10,
+      "running_stock_bottles": 81,
+      "timestamp": "2026-07-06T13:36:08.508Z"
+    },
+    {
+      "id": "sl_1783345116838_ord_del_p4",
+      "product_id": "p4",
+      "transaction_type": "sale_cancel",
+      "cases_change": 2,
       "bottles_change": 0,
-      "running_stock_bottles": 17,
-      "timestamp": "2026-07-05T15:01:52.476Z"
+      "running_stock_bottles": 35,
+      "timestamp": "2026-07-06T13:38:36.838Z"
+    },
+    {
+      "id": "sl_1783345141886_restore",
+      "product_id": "p4",
+      "transaction_type": "purchase_restore",
+      "cases_change": 1,
+      "bottles_change": 0,
+      "running_stock_bottles": 44,
+      "timestamp": "2026-07-06T13:39:01.886Z"
+    },
+    {
+      "id": "sl_1783345194672_p1",
+      "product_id": "p1",
+      "transaction_type": "sale",
+      "cases_change": 0,
+      "bottles_change": -6,
+      "running_stock_bottles": 0,
+      "timestamp": "2026-07-06T13:39:54.672Z"
+    },
+    {
+      "id": "sl_1783345194672_p2",
+      "product_id": "p2",
+      "transaction_type": "sale",
+      "cases_change": -1,
+      "bottles_change": -10,
+      "running_stock_bottles": 47,
+      "timestamp": "2026-07-06T13:39:54.672Z"
+    },
+    {
+      "id": "sl_1783345367366_p4",
+      "product_id": "p4",
+      "transaction_type": "sale",
+      "cases_change": -1,
+      "bottles_change": -10,
+      "running_stock_bottles": 25,
+      "timestamp": "2026-07-06T13:42:47.366Z"
+    },
+    {
+      "id": "sl_1783626490872",
+      "product_id": "p1",
+      "transaction_type": "purchase",
+      "cases_change": 10,
+      "bottles_change": 0,
+      "running_stock_bottles": 90,
+      "timestamp": "2026-07-09T19:48:10.872Z"
+    },
+    {
+      "id": "sl_1783626637465_disp_p1",
+      "product_id": "p1",
+      "transaction_type": "vehicle_dispatch",
+      "cases_change": -5,
+      "bottles_change": 0,
+      "running_stock_bottles": 45,
+      "timestamp": "2026-07-09T19:50:37.465Z"
+    },
+    {
+      "id": "sl_1783626878249_disp_p1",
+      "product_id": "p1",
+      "transaction_type": "vehicle_dispatch",
+      "cases_change": -2,
+      "bottles_change": 0,
+      "running_stock_bottles": 27,
+      "timestamp": "2026-07-09T19:54:38.249Z"
+    },
+    {
+      "id": "sl_1783626878284_recon_p1",
+      "product_id": "p1",
+      "transaction_type": "vehicle_reconciliation_return",
+      "cases_change": 1,
+      "bottles_change": 0,
+      "running_stock_bottles": 36,
+      "timestamp": "2026-07-09T19:54:38.284Z"
     }
   ],
   "orders": [
-    {
-      "id": "ord_1783258605139",
-      "invoice_number": "INV-1001",
-      "route_id": "r1",
-      "shop_id": "s_1_10",
-      "salesman_id": "u2",
-      "order_date": "2026-07-05T13:36:45.139Z",
-      "total_amount": 200,
-      "discount": 0,
-      "net_amount": 200,
-      "status": "delivered",
-      "delivery_man_id": "u3"
-    },
     {
       "id": "ord_1783259157496",
       "invoice_number": "INV-1002",
@@ -3635,18 +3739,61 @@
       "net_amount": 1182,
       "status": "delivered",
       "delivery_man_id": "u3"
+    },
+    {
+      "id": "ord_1783315926751",
+      "invoice_number": "INV-1004",
+      "route_id": "r1",
+      "shop_id": "s_1_1",
+      "salesman_id": "u2",
+      "order_date": "2026-07-06T05:32:06.751Z",
+      "total_amount": 1111,
+      "discount": 0,
+      "net_amount": 1111,
+      "status": "delivered",
+      "delivery_man_id": "u3"
+    },
+    {
+      "id": "ord_1783344968508",
+      "invoice_number": "INV-1005",
+      "route_id": "r1",
+      "shop_id": "s_1_8",
+      "salesman_id": "u2",
+      "order_date": "2026-07-06T13:36:08.508Z",
+      "total_amount": 268,
+      "discount": 0,
+      "net_amount": 268,
+      "status": "delivered",
+      "delivery_man_id": "u3"
+    },
+    {
+      "id": "ord_1783345194672",
+      "invoice_number": "INV-1005",
+      "route_id": "r1",
+      "shop_id": "s_1_44",
+      "salesman_id": "u2",
+      "order_date": "2026-07-06T13:39:54.672Z",
+      "total_amount": 124,
+      "discount": 0,
+      "net_amount": 124,
+      "status": "delivered",
+      "delivery_man_id": "u3"
+    },
+    {
+      "id": "ord_1783345367366",
+      "invoice_number": "INV-1006",
+      "route_id": "r1",
+      "shop_id": "s_1_11",
+      "salesman_id": "u2",
+      "order_date": "2026-07-06T13:42:47.366Z",
+      "total_amount": 211,
+      "discount": 0,
+      "net_amount": 211,
+      "status": "pending",
+      "delivery_man_id": "u3"
     }
   ],
   "order_items": [
-    {
-      "id": "oi_1783258605138_bsndp",
-      "product_id": "p4",
-      "cases": 2,
-      "bottles": 0,
-      "rate": 100,
-      "amount": 200,
-      "order_id": "ord_1783258605139"
-    },
     {
       "id": "oi_1783259157496_by8xz",
       "product_id": "p1",
@@ -3682,17 +3829,63 @@
       "rate": 35,
       "amount": 182,
       "order_id": "ord_1783260930009"
+    },
+    {
+      "id": "oi_1783315926747_6ilxk",
+      "product_id": "p1",
+      "cases": 10,
+      "bottles": 10,
+      "rate": 100,
+      "amount": 1111,
+      "order_id": "ord_1783315926751"
+    },
+    {
+      "id": "oi_1783344968508_vxv8s",
+      "product_id": "p1",
+      "cases": 1,
+      "bottles": 10,
+      "rate": 100,
+      "amount": 211,
+      "order_id": "ord_1783344968508"
+    },
+    {
+      "id": "oi_1783344968508_8x95t",
+      "product_id": "p2",
+      "cases": 1,
+      "bottles": 10,
+      "rate": 40,
+      "amount": 57,
+      "order_id": "ord_1783344968508"
+    },
+    {
+      "id": "oi_1783345194672_jed0h",
+      "product_id": "p1",
+      "cases": 0,
+      "bottles": 6,
+      "rate": 100,
+      "amount": 67,
+      "order_id": "ord_1783345194672"
+    },
+    {
+      "id": "oi_1783345194672_3cc9f",
+      "product_id": "p2",
+      "cases": 1,
+      "bottles": 10,
+      "rate": 40,
+      "amount": 57,
+      "order_id": "ord_1783345194672"
+    },
+    {
+      "id": "oi_1783345367366_3u56m",
+      "product_id": "p4",
+      "cases": 1,
+      "bottles": 10,
+      "rate": 100,
+      "amount": 211,
+      "order_id": "ord_1783345367366"
     }
   ],
   "deliveries": [
-    {
-      "id": "del_1783258605139",
-      "order_id": "ord_1783258605139",
-      "delivery_man_id": "u3",
-      "status": "delivered",
-      "delivery_time": "2026-07-05T13:37:50.503Z",
-      "remarks": "Delivered successfully"
-    },
     {
       "id": "del_1783259157496",
       "order_id": "ord_1783259157496",
@@ -3708,18 +3901,41 @@
       "status": "delivered",
       "delivery_time": "2026-07-05T14:16:07.976Z",
       "remarks": "Delivered successfully"
+    },
+    {
+      "id": "del_1783315926751",
+      "order_id": "ord_1783315926751",
+      "delivery_man_id": "u3",
+      "status": "delivered",
+      "delivery_time": "2026-07-06T05:32:31.211Z",
+      "remarks": "Delivered successfully"
+    },
+    {
+      "id": "del_1783344968508",
+      "order_id": "ord_1783344968508",
+      "delivery_man_id": "u3",
+      "status": "delivered",
+      "delivery_time": "2026-07-06T13:40:45.071Z",
+      "remarks": "Delivered successfully"
+    },
+    {
+      "id": "del_1783345194672",
+      "order_id": "ord_1783345194672",
+      "delivery_man_id": "u3",
+      "status": "delivered",
+      "delivery_time": "2026-07-06T13:41:56.217Z",
+      "remarks": "Delivered successfully"
+    },
+    {
+      "id": "del_1783345367366",
+      "order_id": "ord_1783345367366",
+      "delivery_man_id": "u3",
+      "status": "pending",
+      "delivery_time": null,
+      "remarks": ""
     }
   ],
   "payments": [
-    {
-      "id": "pay_1783258670484",
-      "shop_id": "s_1_10",
-      "order_id": "ord_1783258605139",
-      "collected_amount": 200200,
-      "payment_mode": "cash",
-      "transaction_number": "TXN-1783258670476",
-      "payment_date": "2026-07-05T13:37:50.485Z"
-    },
     {
       "id": "pay_1783259411431",
       "shop_id": "s_1_1",
@@ -3737,6 +3953,33 @@
       "payment_mode": "cash",
       "transaction_number": "TXN-1783260967961",
       "payment_date": "2026-07-05T14:16:07.963Z"
+    },
+    {
+      "id": "pay_1783315951186",
+      "shop_id": "s_1_1",
+      "order_id": "ord_1783315926751",
+      "collected_amount": 1111,
+      "payment_mode": "cash",
+      "transaction_number": "TXN-1783315951182",
+      "payment_date": "2026-07-06T05:32:31.186Z"
+    },
+    {
+      "id": "pay_1783345245059",
+      "shop_id": "s_1_8",
+      "order_id": "ord_1783344968508",
+      "collected_amount": 268,
+      "payment_mode": "cash",
+      "transaction_number": "TXN-1783345245052",
+      "payment_date": "2026-07-06T13:40:45.059Z"
+    },
+    {
+      "id": "pay_1783345316201",
+      "shop_id": "s_1_44",
+      "order_id": "ord_1783345194672",
+      "collected_amount": 124,
+      "payment_mode": "cash",
+      "transaction_number": "TXN-1783345316192",
+      "payment_date": "2026-07-06T13:41:56.201Z"
     }
   ],
   "outstanding_history": [
@@ -3795,17 +4038,81 @@
       "balance_amount": 100,
       "description": "Manual adjustment by Admin",
       "date": "2026-07-05T14:49:34.426Z"
+    },
+    {
+      "id": "oh_1783315926752",
+      "shop_id": "s_1_1",
+      "change_amount": 1111,
+      "balance_amount": 1111,
+      "description": "Order INV-1004 placed",
+      "date": "2026-07-06T05:32:06.752Z"
+    },
+    {
+      "id": "oh_1783315951186",
+      "shop_id": "s_1_1",
+      "change_amount": -1111,
+      "balance_amount": 0,
+      "description": "Payment received via CASH",
+      "date": "2026-07-06T05:32:31.186Z"
+    },
+    {
+      "id": "oh_1783344968508",
+      "shop_id": "s_1_8",
+      "change_amount": 268,
+      "balance_amount": 268,
+      "description": "Order INV-1005 placed",
+      "date": "2026-07-06T13:36:08.508Z"
+    },
+    {
+      "id": "oh_1783345116838_ord_del",
+      "shop_id": "s_1_10",
+      "change_amount": -200,
+      "balance_amount": -100,
+      "description": "Order INV-1001 cancelled/deleted",
+      "date": "2026-07-06T13:38:36.838Z"
+    },
+    {
+      "id": "oh_1783345116838_pay_rev_pay_1783258670484",
+      "shop_id": "s_1_10",
+      "change_amount": 200200,
+      "balance_amount": 200100,
+      "description": "Payment transaction TXN-1783258670476 reversed due to order cancellation",
+      "date": "2026-07-06T13:38:36.838Z"
+    },
+    {
+      "id": "oh_1783345194672",
+      "shop_id": "s_1_44",
+      "change_amount": 124,
+      "balance_amount": 124,
+      "description": "Order INV-1005 placed",
+      "date": "2026-07-06T13:39:54.672Z"
+    },
+    {
+      "id": "oh_1783345245059",
+      "shop_id": "s_1_8",
+      "change_amount": -268,
+      "balance_amount": 0,
+      "description": "Payment received via CASH",
+      "date": "2026-07-06T13:40:45.059Z"
+    },
+    {
+      "id": "oh_1783345316201",
+      "shop_id": "s_1_44",
+      "change_amount": -124,
+      "balance_amount": 0,
+      "description": "Payment received via CASH",
+      "date": "2026-07-06T13:41:56.201Z"
+    },
+    {
+      "id": "oh_1783345367366",
+      "shop_id": "s_1_11",
+      "change_amount": 211,
+      "balance_amount": 211,
+      "description": "Order INV-1006 placed",
+      "date": "2026-07-06T13:42:47.366Z"
     }
   ],
   "bills": [
-    {
-      "id": "bill_1783258670504",
-      "order_id": "ord_1783258605139",
-      "invoice_number": "INV-1001",
-      "pdf_path": "/invoices/INV-1001.pdf",
-      "shared_status": "none",
-      "date": "2026-07-05T13:37:50.504Z"
-    },
     {
       "id": "bill_1783259411445",
       "order_id": "ord_1783259157496",
@@ -3821,6 +4128,30 @@
       "pdf_path": "/invoices/INV-1003.pdf",
       "shared_status": "none",
       "date": "2026-07-05T14:16:07.976Z"
+    },
+    {
+      "id": "bill_1783315951211",
+      "order_id": "ord_1783315926751",
+      "invoice_number": "INV-1004",
+      "pdf_path": "/invoices/INV-1004.pdf",
+      "shared_status": "none",
+      "date": "2026-07-06T05:32:31.211Z"
+    },
+    {
+      "id": "bill_1783345245071",
+      "order_id": "ord_1783344968508",
+      "invoice_number": "INV-1005",
+      "pdf_path": "/invoices/INV-1005.pdf",
+      "shared_status": "none",
+      "date": "2026-07-06T13:40:45.071Z"
+    },
+    {
+      "id": "bill_1783345316217",
+      "order_id": "ord_1783345194672",
+      "invoice_number": "INV-1005",
+      "pdf_path": "/invoices/INV-1005.pdf",
+      "shared_status": "none",
+      "date": "2026-07-06T13:41:56.217Z"
     }
   ],
   "notifications": [
@@ -3853,7 +4184,7 @@
       "type": "low_stock",
       "message_en": "Sprite 2.25 Litre stock is low (17 bottles remaining).",
       "message_ta": "ஸ்ப்ரைட் 2.25 லிட்டர் கையிருப்பு குறைவாக உள்ளது (17 பாட்டில்கள் மட்டுமே உள்ளன).",
-      "status": "unread",
+      "status": "read",
       "created_at": "2026-07-05T13:45:57.496Z"
     },
     {
@@ -3861,7 +4192,7 @@
       "type": "pending_delivery",
       "message_en": "New pending delivery for Annam Groceries #1. Invoice: INV-1002",
       "message_ta": "அன்னம் மளிகை கடை #1 கடைக்கு புதிய டெலிவரி. விலைப்பட்டியல்: INV-1002",
-      "status": "unread",
+      "status": "read",
       "created_at": "2026-07-05T13:45:57.496Z"
     },
     {
@@ -3869,37 +4200,286 @@
       "type": "pending_delivery",
       "message_en": "New pending delivery for Kumaran Sweets Shop #3. Invoice: INV-1003",
       "message_ta": "குமரன் ஸ்வீட்ஸ் கடை #3 கடைக்கு புதிய டெலிவரி. விலைப்பட்டியல்: INV-1003",
-      "status": "unread",
+      "status": "read",
       "created_at": "2026-07-05T14:15:30.009Z"
+    },
+    {
+      "id": "n_del_1783315926752",
+      "type": "pending_delivery",
+      "message_en": "New pending delivery for Annam Groceries #1. Invoice: INV-1004",
+      "message_ta": "அன்னம் மளிகை கடை #1 கடைக்கு புதிய டெலிவரி. விலைப்பட்டியல்: INV-1004",
+      "status": "read",
+      "created_at": "2026-07-06T05:32:06.752Z"
+    },
+    {
+      "id": "n_1783344968508_low",
+      "type": "low_stock",
+      "message_en": "Coca Cola 2.25 Litre stock is low (6 bottles remaining).",
+      "message_ta": "கோகோ கோலா 2.25 லிட்டர் கையிருப்பு குறைவாக உள்ளது (6 பாட்டில்கள் மட்டுமே உள்ளன).",
+      "status": "read",
+      "created_at": "2026-07-06T13:36:08.508Z"
+    },
+    {
+      "id": "n_del_1783344968508",
+      "type": "pending_delivery",
+      "message_en": "New pending delivery for Murugan Sweets Shop #8. Invoice: INV-1005",
+      "message_ta": "முருகன் ஸ்வீட்ஸ் கடை #8 கடைக்கு புதிய டெலிவரி. விலைப்பட்டியல்: INV-1005",
+      "status": "read",
+      "created_at": "2026-07-06T13:36:08.508Z"
+    },
+    {
+      "id": "n_1783345194672_out",
+      "type": "out_of_stock",
+      "message_en": "Coca Cola 2.25 Litre is Out of Stock!",
+      "message_ta": "கோகோ கோலா 2.25 லிட்டர் கையிருப்பு முற்றிலும் தீர்ந்துவிட்டது!",
+      "status": "read",
+      "created_at": "2026-07-06T13:39:54.672Z"
+    },
+    {
+      "id": "n_1783345194672_low",
+      "type": "low_stock",
+      "message_en": "Coca Cola 500 ml stock is low (47 bottles remaining).",
+      "message_ta": "கோகோ கோலா 500 மி.லி கையிருப்பு குறைவாக உள்ளது (47 பாட்டில்கள் மட்டுமே உள்ளன).",
+      "status": "read",
+      "created_at": "2026-07-06T13:39:54.672Z"
+    },
+    {
+      "id": "n_del_1783345194672",
+      "type": "pending_delivery",
+      "message_en": "New pending delivery for Mani Tea Stall #44. Invoice: INV-1005",
+      "message_ta": "மணி டீ ஸ்டால் #44 கடைக்கு புதிய டெலிவரி. விலைப்பட்டியல்: INV-1005",
+      "status": "read",
+      "created_at": "2026-07-06T13:39:54.672Z"
+    },
+    {
+      "id": "n_del_1783345367366",
+      "type": "pending_delivery",
+      "message_en": "New pending delivery for Annam Groceries #11. Invoice: INV-1006",
+      "message_ta": "அன்னம் மளிகை கடை #11 கடைக்கு புதிய டெலிவரி. விலைப்பட்டியல்: INV-1006",
+      "status": "read",
+      "created_at": "2026-07-06T13:42:47.366Z"
+    },
+    {
+      "id": "n_1783626490872",
+      "type": "stock_refilled",
+      "message_en": "Coca Cola 2.25 Litre (2.25L) stock has been refilled.",
+      "message_ta": "கோகோ கோலா 2.25 லிட்டர் (2.25L) கையிருப்பு நிரப்பப்பட்டுள்ளது.",
+      "status": "read",
+      "created_at": "2026-07-09T19:48:10.872Z"
     }
   ],
   "recycle_bin": [
     {
-      "id": "rb_1783263712476_pc",
-      "table": "purchases",
-      "original_id": "purch_1783260363922",
+      "id": "rb_1783345116838_or",
+      "table": "orders",
+      "original_id": "ord_1783258605139",
       "data": {
-        "purchase": {
-          "id": "purch_1783260363922",
-          "supplier": "Temp Supplier",
-          "purchase_date": "2026-07-05T00:00:00.000Z",
-          "product_id": "p4",
+        "order": {
+          "id": "ord_1783258605139",
+          "invoice_number": "INV-1001",
+          "route_id": "r1",
+          "shop_id": "s_1_10",
+          "salesman_id": "u2",
+          "order_date": "2026-07-05T13:36:45.139Z",
+          "total_amount": 200,
+          "discount": 0,
+          "net_amount": 200,
+          "status": "delivered",
+          "delivery_man_id": "u3"
+        },
+        "order_items": [
+          {
+            "id": "oi_1783258605138_bsndp",
+            "product_id": "p4",
+            "cases": 2,
+            "bottles": 0,
+            "rate": 100,
+            "amount": 200,
+            "order_id": "ord_1783258605139"
+          }
+        ],
+        "deliveries": [
+          {
+            "id": "del_1783258605139",
+            "order_id": "ord_1783258605139",
+            "delivery_man_id": "u3",
+            "status": "delivered",
+            "delivery_time": "2026-07-05T13:37:50.503Z",
+            "remarks": "Delivered successfully"
+          }
+        ],
+        "bills": [
+          {
+            "id": "bill_1783258670504",
+            "order_id": "ord_1783258605139",
+            "invoice_number": "INV-1001",
+            "pdf_path": "/invoices/INV-1001.pdf",
+            "shared_status": "none",
+            "date": "2026-07-05T13:37:50.504Z"
+          }
+        ],
+        "payments": [
+          {
+            "id": "pay_1783258670484",
+            "shop_id": "s_1_10",
+            "order_id": "ord_1783258605139",
+            "collected_amount": 200200,
+            "payment_mode": "cash",
+            "transaction_number": "TXN-1783258670476",
+            "payment_date": "2026-07-05T13:37:50.485Z"
+          }
+        ],
+        "ledgerEntries": [
+          {
+            "id": "sl_1783345116838_ord_del_p4",
+            "product_id": "p4",
+            "transaction_type": "sale_cancel",
+            "cases_change": 2,
+            "bottles_change": 0,
+            "running_stock_bottles": 35,
+            "timestamp": "2026-07-06T13:38:36.838Z"
+          }
+        ],
+        "outstandingEntries": [
+          {
+            "id": "oh_1783345116838_ord_del",
+            "shop_id": "s_1_10",
+            "change_amount": -200,
+            "balance_amount": -100,
+            "description": "Order INV-1001 cancelled/deleted",
+            "date": "2026-07-06T13:38:36.838Z"
+          },
+          {
+            "id": "oh_1783345116838_pay_rev_pay_1783258670484",
+            "shop_id": "s_1_10",
+            "change_amount": 200200,
+            "balance_amount": 200100,
+            "description": "Payment transaction TXN-1783258670476 reversed due to order cancellation",
+            "date": "2026-07-06T13:38:36.838Z"
+          }
+        ]
+      },
+      "deleted_at": "2026-07-06T13:38:36.838Z",
+      "expires_at": "2026-08-05T13:38:36.838Z"
+    }
+  ],
+  "vehicles": [
+    {
+      "id": "v_1783626120958",
+      "vehicle_number": "TN-45-A-1234",
+      "driver_name": "Ramesh",
+      "salesman_id": "u2",
+      "status": "active"
+    },
+    {
+      "id": "v_1783626878235",
+      "vehicle_number": "TN-45-A-1234",
+      "driver_name": "Verification Ramesh",
+      "salesman_id": "u2",
+      "status": "active"
+    }
+  ],
+  "vehicle_stock": [
+    {
+      "id": "vs_1783626637465_p1",
+      "vehicle_id": "v_1783626120958",
+      "product_id": "p1",
+      "current_stock_bottles": 27
+    },
+    {
+      "id": "vs_1783626878249_p1",
+      "vehicle_id": "v_1783626878235",
+      "product_id": "p1",
+      "current_stock_bottles": 0
+    }
+  ],
+  "vehicle_dispatches": [
+    {
+      "id": "vd_1783626637465",
+      "vehicle_id": "v_1783626120958",
+      "dispatch_date": "2026-07-09T19:50:37.465Z",
+      "items": [
+        {
+          "product_id": "p1",
+          "cases": 5,
+          "bottles": 0,
+          "total_bottles": 45
+        }
+      ]
+    },
+    {
+      "id": "vd_1783626878249",
+      "vehicle_id": "v_1783626878235",
+      "dispatch_date": "2026-07-09T19:54:38.249Z",
+      "items": [
+        {
+          "product_id": "p1",
+          "cases": 2,
+          "bottles": 0,
+          "total_bottles": 18
+        }
+      ]
+    }
+  ],
+  "vehicle_sales": [
+    {
+      "id": "vs_1783626843473",
+      "invoice_number": "DS-20260709-0001",
+      "vehicle_id": "v_1783626120958",
+      "salesman_id": "u2",
+      "shop_id": "s_1_8",
+      "sale_date": "2026-07-09T19:54:03.473Z",
+      "items": [
+        {
+          "product_id": "p1",
+          "cases": 2,
+          "bottles": 0,
+          "price": 100,
+          "total_bottles": 18,
+          "subtotal": 1800
+        }
+      ],
+      "discount": 0,
+      "net_amount": 1800,
+      "payment_mode": "cash",
+      "upi_reference": ""
+    },
+    {
+      "id": "vs_1783626878269",
+      "invoice_number": "DS-20260709-0002",
+      "vehicle_id": "v_1783626878235",
+      "salesman_id": "u2",
+      "shop_id": "s_1_1",
+      "sale_date": "2026-07-09T19:54:38.269Z",
+      "items": [
+        {
+          "product_id": "p1",
           "cases": 1,
           "bottles": 0,
-          "purchase_price": 80
-        },
-        "ledgerEntry": {
-          "id": "sl_1783263712476_del",
-          "product_id": "p4",
-          "transaction_type": "purchase_cancel",
-          "cases_change": -1,
-          "bottles_change": 0,
-          "running_stock_bottles": 17,
-          "timestamp": "2026-07-05T15:01:52.476Z"
+          "price": 90,
+          "total_bottles": 9,
+          "subtotal": 810
         }
-      },
-      "deleted_at": "2026-07-05T15:01:52.476Z",
-      "expires_at": "2026-08-04T15:01:52.476Z"
+      ],
+      "discount": 10,
+      "net_amount": 800,
+      "payment_mode": "cash",
+      "upi_reference": ""
+    }
+  ],
+  "vehicle_reconciliations": [
+    {
+      "id": "vr_1783626878284",
+      "vehicle_id": "v_1783626878235",
+      "reconciliation_date": "2026-07-09T19:54:38.284Z",
+      "returned_items": [
+        {
+          "product_id": "p1",
+          "cases": 1,
+          "bottles": 0,
+          "total_bottles": 9
+        }
+      ]
     }
   ]
 }

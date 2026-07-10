@@ -180,7 +180,27 @@ export const translations = {
     confirm_title: "Are you sure?",
     confirm_delete_msg: "This record will be moved to the Recycle Bin and stored for 30 days before permanent deletion.",
     confirm_cancel: "Cancel",
-    confirm_ok: "Delete"
+    confirm_ok: "Delete",
+
+    // Vehicle Direct Sales
+    vehicle_direct_sales: "Vehicle Direct Sales",
+    vehicles: "Vehicles",
+    vehicle_number: "Vehicle Number",
+    driver_name: "Driver Name",
+    add_vehicle: "Add Vehicle",
+    edit_vehicle: "Edit Vehicle",
+    dispatch_stock: "Dispatch Stock",
+    reconcile_stock: "Reconcile Stock",
+    reconcile: "Reconcile",
+    select_vehicle: "Select Vehicle",
+    loaded_stock: "Vehicle Loaded Stock",
+    vehicle_reports: "Vehicle Reports",
+    reconciliation_log: "Reconciliation Log",
+    dispatches_log: "Dispatches Log",
+    vehicle_wise_sales: "Vehicle-wise Sales Summary",
+    returned_items: "Returned Items",
+    dispatch_success: "Stock loaded onto vehicle successfully!",
+    reconciliation_success: "Vehicle stock reconciled and returned to warehouse successfully!"
   },
   ta: {
     // Navigation & Roles
@@ -363,6 +383,26 @@ export const translations = {
     confirm_title: "உறுதியாகவா?",
     confirm_delete_msg: "இந்தத் தரவு குப்பைத் தொட்டிக்கு நகர்த்தப்பட்டு, நிரந்தரமாக நீக்கப்படுவதற்கு முன்பு 30 நாட்களுக்கு சேமிக்கப்படும்.",
     confirm_cancel: "ரத்து செய்",
-    confirm_ok: "நீக்கு"
+    confirm_ok: "நீக்கு",
+
+    // Vehicle Direct Sales
+    vehicle_direct_sales: "வாகன நேரடி விற்பனை",
+    vehicles: "வாகனங்கள்",
+    vehicle_number: "வாகன எண்",
+    driver_name: "ஓட்டுநர் பெயர்",
+    add_vehicle: "வாகனம் சேர்",
+    edit_vehicle: "வாகனம் திருத்து",
+    dispatch_stock: "சரக்கு ஏற்றுதல்",
+    reconcile_stock: "சரக்கு சமரசம்",
+    reconcile: "சமரசம் செய்க",
+    select_vehicle: "வாகனத்தைத் தேர்ந்தெடுக்கவும்",
+    loaded_stock: "வாகனத்தில் உள்ள சரக்கு",
+    vehicle_reports: "வாகன அறிக்கைகள்",
+    reconciliation_log: "சமரசம் பதிவுகள்",
+    dispatches_log: "ஏற்றப்பட்ட பதிவுகள்",
+    vehicle_wise_sales: "வாகன விற்பனை சுருக்கம்",
+    returned_items: "திரும்பப் பெற்றவை",
+    dispatch_success: "சரக்கு வெற்றிகரமாக வாகனத்தில் ஏற்றப்பட்டது!",
+    reconciliation_success: "சரக்கு வெற்றிகரமாக சமரசம் செய்யப்பட்டு கிடங்கிற்கு மாற்றப்பட்டது!"
   }
 };

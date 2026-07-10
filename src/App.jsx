@@ -16,6 +16,7 @@ import Reports from './components/Reports';
 import Billing from './components/Billing';
 import UserMgr from './components/UserMgr';
 import RecycleBin from './components/RecycleBin';
+import VehicleDirectSales from './components/VehicleDirectSales';
 
 export default function App() {
   const [lang, setLang] = useState('en'); // 'en' or 'ta'
@@ -103,6 +104,7 @@ export default function App() {
         { id: 'stock', label: t('stock_ledger'), icon: '📈' },
         { id: 'orders', label: t('order_taking'), icon: '🛒' },
         { id: 'deliveries', label: t('deliveries'), icon: '🚚' },
+        { id: 'vehicle_sales', label: t('vehicle_direct_sales'), icon: '🚛' },
         { id: 'reports', label: t('reports'), icon: '📈' },
         { id: 'users', label: t('staff_mgmt'), icon: '👥' },
         { id: 'recycle_bin', label: t('recycle_bin'), icon: '♻️' }
@@ -111,6 +113,7 @@ export default function App() {
       links.push(
         { id: 'shops', label: t('shop_mgmt'), icon: '🏢' },
         { id: 'orders', label: t('order_taking'), icon: '🛒' },
+        { id: 'vehicle_sales', label: t('vehicle_direct_sales'), icon: '🚛' },
         { id: 'stock', label: t('stock_ledger'), icon: '📈' }
       );
     } else if (role === 'delivery') {
@@ -172,6 +175,8 @@ export default function App() {
         return <UserMgr t={t} lang={lang} />;
       case 'recycle_bin':
         return <RecycleBin t={t} lang={lang} />;
+      case 'vehicle_sales':
+        return <VehicleDirectSales t={t} lang={lang} onBillSelected={handleViewBillFromDelivery} />;
       default:
         return <Dashboard t={t} lang={lang} />;
     }

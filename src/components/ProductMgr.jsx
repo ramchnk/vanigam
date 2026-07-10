@@ -11,6 +11,7 @@ export default function ProductMgr({ t, lang }) {
   const [nameEn, setNameEn] = useState('');
   const [nameTa, setNameTa] = useState('');
   const [brand, setBrand] = useState('');
+  const [category, setCategory] = useState('');
   const [size, setSize] = useState('');
   const [caseQtyRule, setCaseQtyRule] = useState(24);
   const [purchasePrice, setPurchasePrice] = useState(0);
@@ -39,6 +40,7 @@ export default function ProductMgr({ t, lang }) {
       name_en: nameEn,
       name_ta: nameTa,
       brand,
+      category,
       size,
       case_qty_rule: Number(caseQtyRule),
       purchase_price: Number(purchasePrice),
@@ -67,6 +69,7 @@ export default function ProductMgr({ t, lang }) {
     setNameEn(prod.name_en);
     setNameTa(prod.name_ta);
     setBrand(prod.brand);
+    setCategory(prod.category || '');
     setSize(prod.size);
     setCaseQtyRule(prod.case_qty_rule);
     setPurchasePrice(prod.purchase_price);
@@ -103,6 +106,7 @@ export default function ProductMgr({ t, lang }) {
     setNameEn('');
     setNameTa('');
     setBrand('');
+    setCategory('');
     setSize('');
     setCaseQtyRule(24);
     setPurchasePrice(0);
@@ -149,6 +153,10 @@ export default function ProductMgr({ t, lang }) {
             <div className="form-group">
               <label>{t('brand')}</label>
               <input type="text" className="form-input" value={brand} onChange={e => setBrand(e.target.value)} required placeholder="e.g. Coca Cola" />
+            </div>
+            <div className="form-group">
+              <label>{lang === 'ta' ? 'வகை (Category)' : 'Category'}</label>
+              <input type="text" className="form-input" value={category} onChange={e => setCategory(e.target.value)} required placeholder="e.g. Soft Drinks, Juices" />
             </div>
             <div className="form-group">
               <label>{t('size')}</label>
@@ -203,7 +211,7 @@ export default function ProductMgr({ t, lang }) {
             <thead>
               <tr>
                 <th>Product details</th>
-                <th>Brand / Size</th>
+                <th>Brand / Category / Size</th>
                 <th>Case Qty Rule</th>
                 <th>Purchase (Case)</th>
                 <th>Wholesale (Case)</th>
@@ -220,7 +228,7 @@ export default function ProductMgr({ t, lang }) {
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>ID: {p.id}</div>
                   </td>
                   <td>
-                    <div>{p.brand}</div>
+                    <div>{p.brand} {p.category && `(${p.category})`}</div>
                     <div style={{ fontSize: '0.85rem', color: 'var(--accent-cyan)' }}>{p.size}</div>
                   </td>
                   <td><strong>{p.case_qty_rule}</strong> Bottles</td>

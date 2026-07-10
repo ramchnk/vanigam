@@ -28,7 +28,13 @@ function releaseLock() {
 async function readDB() {
   try {
     const data = await fs.readFile(dbPath, 'utf8');
-    return JSON.parse(data);
+    const db = JSON.parse(data);
+    if (!db.vehicles) db.vehicles = [];
+    if (!db.vehicle_stock) db.vehicle_stock = [];
+    if (!db.vehicle_dispatches) db.vehicle_dispatches = [];
+    if (!db.vehicle_sales) db.vehicle_sales = [];
+    if (!db.vehicle_reconciliations) db.vehicle_reconciliations = [];
+    return db;
   } catch (error) {
     return await seedDB();
   }
@@ -91,12 +97,12 @@ async function seedDB() {
   }
 
   const products = [
-    { id: 'p1', name_en: 'Coca Cola 2.25 Litre', name_ta: 'கோகோ கோலா 2.25 லிட்டர்', brand: 'Coca Cola', size: '2.25L', case_qty_rule: 9, purchase_price: 80, wholesale_price: 90, retail_price: 100, current_stock_bottles: 90, min_stock: 18, status: 'active' }, // 10 cases
-    { id: 'p2', name_en: 'Coca Cola 500 ml', name_ta: 'கோகோ கோலா 500 மி.லி', brand: 'Coca Cola', size: '500ml', case_qty_rule: 24, purchase_price: 30, wholesale_price: 35, retail_price: 40, current_stock_bottles: 240, min_stock: 48, status: 'active' }, // 10 cases
-    { id: 'p3', name_en: 'Coca Cola 250 ml', name_ta: 'கோகோ கோலா 250 மி.லி', brand: 'Coca Cola', size: '250ml', case_qty_rule: 24, purchase_price: 15, wholesale_price: 18, retail_price: 20, current_stock_bottles: 0, min_stock: 48, status: 'active' }, // Out of stock
-    { id: 'p4', name_en: 'Sprite 2.25 Litre', name_ta: 'ஸ்ப்ரைட் 2.25 லிட்டர்', brand: 'Sprite', size: '2.25L', case_qty_rule: 9, purchase_price: 80, wholesale_price: 90, retail_price: 100, current_stock_bottles: 45, min_stock: 18, status: 'active' }, // 5 cases
-    { id: 'p5', name_en: 'Sprite 500 ml', name_ta: 'ஸ்ப்ரைட் 500 மி.லி', brand: 'Sprite', size: '500ml', case_qty_rule: 24, purchase_price: 30, wholesale_price: 35, retail_price: 40, current_stock_bottles: 120, min_stock: 48, status: 'active' }, // 5 cases
-    { id: 'p6', name_en: 'Maaza 1 Litre', name_ta: 'மாஸா 1 லிட்டர்', brand: 'Maaza', size: '1L', case_qty_rule: 12, purchase_price: 45, wholesale_price: 52, retail_price: 60, current_stock_bottles: 12, min_stock: 12, status: 'active' } // Low stock (1 case)
+    { id: 'p1', name_en: 'Coca Cola 2.25 Litre', name_ta: 'கோகோ கோலா 2.25 லிட்டர்', brand: 'Coca Cola', category: 'Soft Drinks', size: '2.25L', case_qty_rule: 9, purchase_price: 80, wholesale_price: 90, retail_price: 100, current_stock_bottles: 90, min_stock: 18, status: 'active' }, // 10 cases
+    { id: 'p2', name_en: 'Coca Cola 500 ml', name_ta: 'கோகோ கோலா 500 மி.லி', brand: 'Coca Cola', category: 'Soft Drinks', size: '500ml', case_qty_rule: 24, purchase_price: 30, wholesale_price: 35, retail_price: 40, current_stock_bottles: 240, min_stock: 48, status: 'active' }, // 10 cases
+    { id: 'p3', name_en: 'Coca Cola 250 ml', name_ta: 'கோகோ கோலா 250 மி.லி', brand: 'Coca Cola', category: 'Soft Drinks', size: '250ml', case_qty_rule: 24, purchase_price: 15, wholesale_price: 18, retail_price: 20, current_stock_bottles: 0, min_stock: 48, status: 'active' }, // Out of stock
+    { id: 'p4', name_en: 'Sprite 2.25 Litre', name_ta: 'ஸ்ப்ரைட் 2.25 லிட்டர்', brand: 'Sprite', category: 'Soft Drinks', size: '2.25L', case_qty_rule: 9, purchase_price: 80, wholesale_price: 90, retail_price: 100, current_stock_bottles: 45, min_stock: 18, status: 'active' }, // 5 cases
+    { id: 'p5', name_en: 'Sprite 500 ml', name_ta: 'ஸ்ப்ரைட் 500 மி.லி', brand: 'Sprite', category: 'Soft Drinks', size: '500ml', case_qty_rule: 24, purchase_price: 30, wholesale_price: 35, retail_price: 40, current_stock_bottles: 120, min_stock: 48, status: 'active' }, // 5 cases
+    { id: 'p6', name_en: 'Maaza 1 Litre', name_ta: 'மாஸா 1 லிட்டர்', brand: 'Maaza', category: 'Juices', size: '1L', case_qty_rule: 12, purchase_price: 45, wholesale_price: 52, retail_price: 60, current_stock_bottles: 12, min_stock: 12, status: 'active' } // Low stock (1 case)
   ];
 
   const purchases = [];
@@ -135,6 +141,11 @@ async function seedDB() {
     outstanding_history,
     bills,
     notifications,
+    vehicles: [],
+    vehicle_stock: [],
+    vehicle_dispatches: [],
+    vehicle_sales: [],
+    vehicle_reconciliations: [],
     recycle_bin: []
   };
 
@@ -398,6 +409,7 @@ app.post('/api/products', async (req, res) => {
       name_en: req.body.name_en,
       name_ta: req.body.name_ta,
       brand: req.body.brand,
+      category: req.body.category || '',
       size: req.body.size,
       case_qty_rule: Number(req.body.case_qty_rule),
       purchase_price: Number(req.body.purchase_price),
@@ -1238,6 +1250,335 @@ async function cleanupRecycleBin() {
     releaseLock();
   }
 }
+
+// ---------------- VEHICLE DIRECT SALES API ----------------
+
+// 1. Get all vehicles
+app.get('/api/vehicles', async (req, res) => {
+  const db = await readDB();
+  res.json(db.vehicles || []);
+});
+
+// 2. Create vehicle
+app.post('/api/vehicles', async (req, res) => {
+  await acquireLock();
+  try {
+    const db = await readDB();
+    const newVehicle = {
+      id: `v_${Date.now()}`,
+      vehicle_number: req.body.vehicle_number,
+      driver_name: req.body.driver_name,
+      salesman_id: req.body.salesman_id || '',
+      status: req.body.status || 'active'
+    };
+    db.vehicles.push(newVehicle);
+    await writeDB(db);
+    res.status(201).json(newVehicle);
+  } finally {
+    releaseLock();
+  }
+});
+
+// 3. Update vehicle
+app.put('/api/vehicles/:id', async (req, res) => {
+  await acquireLock();
+  try {
+    const db = await readDB();
+    const idx = db.vehicles.findIndex(v => v.id === req.params.id);
+    if (idx === -1) {
+      return res.status(404).json({ error: 'Vehicle not found' });
+    }
+    db.vehicles[idx] = { ...db.vehicles[idx], ...req.body };
+    await writeDB(db);
+    res.json(db.vehicles[idx]);
+  } finally {
+    releaseLock();
+  }
+});
+
+// 4. Delete vehicle
+app.delete('/api/vehicles/:id', async (req, res) => {
+  await acquireLock();
+  try {
+    const db = await readDB();
+    db.vehicles = db.vehicles.filter(v => v.id !== req.params.id);
+    if (db.vehicle_stock) {
+      db.vehicle_stock = db.vehicle_stock.filter(s => s.vehicle_id !== req.params.id);
+    }
+    await writeDB(db);
+    res.json({ success: true });
+  } finally {
+    releaseLock();
+  }
+});
+
+// 5. Get current vehicle stock
+app.get('/api/vehicles/stock', async (req, res) => {
+  const db = await readDB();
+  res.json(db.vehicle_stock || []);
+});
+
+// 6. Get dispatches
+app.get('/api/vehicles/dispatches', async (req, res) => {
+  const db = await readDB();
+  res.json(db.vehicle_dispatches || []);
+});
+
+// 7. Dispatch stock to vehicle
+app.post('/api/vehicles/dispatch', async (req, res) => {
+  await acquireLock();
+  try {
+    const db = await readDB();
+    const { vehicle_id, items } = req.body; // items: array of { product_id, cases, bottles }
+    
+    // Check if vehicle exists
+    const vehicle = db.vehicles.find(v => v.id === vehicle_id);
+    if (!vehicle) {
+      return res.status(400).json({ error: 'Vehicle not found' });
+    }
+
+    // Verify stock availability in warehouse
+    for (const item of items) {
+      const product = db.products.find(p => p.id === item.product_id);
+      if (!product) {
+        return res.status(400).json({ error: `Product not found: ${item.product_id}` });
+      }
+      const totalRequestedBottles = (Number(item.cases || 0) * product.case_qty_rule) + Number(item.bottles || 0);
+      if (product.current_stock_bottles < totalRequestedBottles) {
+        return res.status(400).json({ 
+          error: `Insufficient warehouse stock for ${product.name_en}. Requested: ${totalRequestedBottles} bottles, Available: ${product.current_stock_bottles} bottles` 
+        });
+      }
+    }
+
+    const dispatchItems = [];
+    // Process stock movement
+    for (const item of items) {
+      const product = db.products.find(p => p.id === item.product_id);
+      const totalBottles = (Number(item.cases || 0) * product.case_qty_rule) + Number(item.bottles || 0);
+      if (totalBottles === 0) continue;
+
+      // Deduct from warehouse
+      product.current_stock_bottles -= totalBottles;
+
+      // Add to vehicle stock
+      let vStock = db.vehicle_stock.find(s => s.vehicle_id === vehicle_id && s.product_id === item.product_id);
+      if (!vStock) {
+        vStock = {
+          id: `vs_${Date.now()}_${item.product_id}`,
+          vehicle_id,
+          product_id: item.product_id,
+          current_stock_bottles: 0
+        };
+        db.vehicle_stock.push(vStock);
+      }
+      vStock.current_stock_bottles += totalBottles;
+
+      // Log in main stock ledger
+      db.stock_ledger.push({
+        id: `sl_${Date.now()}_disp_${item.product_id}`,
+        product_id: item.product_id,
+        transaction_type: 'vehicle_dispatch',
+        cases_change: -Number(item.cases || 0),
+        bottles_change: -Number(item.bottles || 0),
+        running_stock_bottles: product.current_stock_bottles,
+        timestamp: new Date().toISOString()
+      });
+
+      dispatchItems.push({
+        product_id: item.product_id,
+        cases: Number(item.cases || 0),
+        bottles: Number(item.bottles || 0),
+        total_bottles: totalBottles
+      });
+    }
+
+    const newDispatch = {
+      id: `vd_${Date.now()}`,
+      vehicle_id,
+      dispatch_date: new Date().toISOString(),
+      items: dispatchItems
+    };
+    db.vehicle_dispatches.push(newDispatch);
+
+    await writeDB(db);
+    res.status(201).json(newDispatch);
+  } finally {
+    releaseLock();
+  }
+});
+
+// 8. Get vehicle sales
+app.get('/api/vehicles/sales', async (req, res) => {
+  const db = await readDB();
+  res.json(db.vehicle_sales || []);
+});
+
+// 9. Record vehicle sale
+app.post('/api/vehicles/sales', async (req, res) => {
+  await acquireLock();
+  try {
+    const db = await readDB();
+    const { vehicle_id, shop_id, salesman_id, items, discount, payment_mode, upi_reference } = req.body;
+    // items: array of { product_id, cases, bottles, price }
+
+    const shop = db.shops.find(s => s.id === shop_id);
+    if (!shop) {
+      return res.status(400).json({ error: 'Shop not found' });
+    }
+
+    // Verify vehicle stock
+    for (const item of items) {
+      const product = db.products.find(p => p.id === item.product_id);
+      if (!product) {
+        return res.status(400).json({ error: `Product not found: ${item.product_id}` });
+      }
+      const totalReq = (Number(item.cases || 0) * product.case_qty_rule) + Number(item.bottles || 0);
+      const vStock = db.vehicle_stock.find(s => s.vehicle_id === vehicle_id && s.product_id === item.product_id);
+      const vStockQty = vStock ? vStock.current_stock_bottles : 0;
+      if (vStockQty < totalReq) {
+        return res.status(400).json({
+          error: `Insufficient stock on vehicle for ${product.name_en}. Requested: ${totalReq} bottles, On Vehicle: ${vStockQty} bottles`
+        });
+      }
+    }
+
+    let totalAmount = 0;
+    const saleItems = [];
+
+    // Deduct stock and compile items
+    for (const item of items) {
+      const product = db.products.find(p => p.id === item.product_id);
+      const totalBottles = (Number(item.cases || 0) * product.case_qty_rule) + Number(item.bottles || 0);
+      if (totalBottles === 0) continue;
+
+      const vStock = db.vehicle_stock.find(s => s.vehicle_id === vehicle_id && s.product_id === item.product_id);
+      vStock.current_stock_bottles -= totalBottles;
+
+      const subtotal = totalBottles * (item.price || 0);
+      totalAmount += subtotal;
+
+      saleItems.push({
+        product_id: item.product_id,
+        cases: Number(item.cases || 0),
+        bottles: Number(item.bottles || 0),
+        price: Number(item.price || 0),
+        total_bottles: totalBottles,
+        subtotal
+      });
+    }
+
+    const disc = Number(discount || 0);
+    const netAmount = Math.max(0, totalAmount - disc);
+
+    // Generate Invoice Number
+    const seq = db.vehicle_sales.length + 1;
+    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const invoiceNum = `DS-${dateStr}-${String(seq).padStart(4, '0')}`;
+
+    // Handle Payment Mode
+    if (payment_mode === 'credit') {
+      shop.outstanding_amount = Number(shop.outstanding_amount || 0) + netAmount;
+      db.outstanding_history.push({
+        id: `oh_${Date.now()}_ds`,
+        shop_id: shop.id,
+        change_amount: netAmount,
+        balance_amount: shop.outstanding_amount,
+        description: `Direct Sale Invoice ${invoiceNum}`,
+        date: new Date().toISOString()
+      });
+    }
+
+    const newSale = {
+      id: `vs_${Date.now()}`,
+      invoice_number: invoiceNum,
+      vehicle_id,
+      salesman_id,
+      shop_id,
+      sale_date: new Date().toISOString(),
+      items: saleItems,
+      discount: disc,
+      net_amount: netAmount,
+      payment_mode,
+      upi_reference: upi_reference || ''
+    };
+
+    db.vehicle_sales.push(newSale);
+
+    await writeDB(db);
+    res.status(201).json(newSale);
+  } finally {
+    releaseLock();
+  }
+});
+
+// 10. Get reconciliations
+app.get('/api/vehicles/reconciliations', async (req, res) => {
+  const db = await readDB();
+  res.json(db.vehicle_reconciliations || []);
+});
+
+// 11. Reconcile / Return stock
+app.post('/api/vehicles/reconcile', async (req, res) => {
+  await acquireLock();
+  try {
+    const db = await readDB();
+    const { vehicle_id } = req.body;
+    const vStocks = db.vehicle_stock.filter(s => s.vehicle_id === vehicle_id && s.current_stock_bottles > 0);
+
+    if (vStocks.length === 0) {
+      return res.status(400).json({ error: 'No stock left on the vehicle to reconcile' });
+    }
+
+    const returnedItems = [];
+    for (const vStock of vStocks) {
+      const product = db.products.find(p => p.id === vStock.product_id);
+      if (!product) continue;
+
+      const qty = vStock.current_stock_bottles;
+      
+      // Return to warehouse
+      product.current_stock_bottles += qty;
+
+      // Log in main stock ledger
+      const cases = Math.floor(qty / product.case_qty_rule);
+      const bottles = qty % product.case_qty_rule;
+
+      db.stock_ledger.push({
+        id: `sl_${Date.now()}_recon_${product.id}`,
+        product_id: product.id,
+        transaction_type: 'vehicle_reconciliation_return',
+        cases_change: cases,
+        bottles_change: bottles,
+        running_stock_bottles: product.current_stock_bottles,
+        timestamp: new Date().toISOString()
+      });
+
+      returnedItems.push({
+        product_id: product.id,
+        cases,
+        bottles,
+        total_bottles: qty
+      });
+
+      // Clear vehicle stock
+      vStock.current_stock_bottles = 0;
+    }
+
+    const newRecon = {
+      id: `vr_${Date.now()}`,
+      vehicle_id,
+      reconciliation_date: new Date().toISOString(),
+      returned_items: returnedItems
+    };
+    db.vehicle_reconciliations.push(newRecon);
+
+    await writeDB(db);
+    res.status(200).json(newRecon);
+  } finally {
+    releaseLock();
+  }
+});
 
 // Launch server
 const PORT = process.env.PORT || 5001;
