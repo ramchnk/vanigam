@@ -17,6 +17,52 @@ let initError = null;
 let credentialSource = 'none';
 let debugInfo = {};
 
+// Clean wrapping quotes and spaces from env vars
+const cleanEnvVar = (val) => {
+  if (!val) return '';
+  let cleaned = val.trim();
+  if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
+    cleaned = cleaned.slice(1, -1);
+  }
+  return cleaned.trim();
+};
+
+// Robust PEM private key formatter
+const cleanPrivateKey = (key) => {
+  if (!key) return '';
+  
+  let cleaned = cleanEnvVar(key);
+  
+  // Replace literal '\n' sequences (two characters: '\' and 'n') with real newlines
+  cleaned = cleaned.replace(/\\n/g, '\n');
+  
+  // Strip out any Windows carriage return characters
+  cleaned = cleaned.replace(/\r/g, '');
+  
+  const header = '-----BEGIN PRIVATE KEY-----';
+  const footer = '-----END PRIVATE KEY-----';
+  
+  // Isolate the base64 body of the key
+  let body = cleaned;
+  if (body.includes(header)) {
+    body = body.split(header)[1];
+  }
+  if (body.includes(footer)) {
+    body = body.split(footer)[0];
+  }
+  
+  // Strip all non-base64 characters (spaces, line breaks, tabs, etc.)
+  body = body.replace(/[^A-Za-z0-9+/=]/g, '');
+  
+  // Re-wrap the body text every 64 characters (standard PEM encoding format)
+  const lines = [];
+  for (let i = 0; i < body.length; i += 64) {
+    lines.push(body.substring(i, i + 64));
+  }
+  
+  return `${header}\n${lines.join('\n')}\n${footer}\n`;
+};
+
 function getFirebaseCredentials() {
   // 1. Try Service Account Path
   const saPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
@@ -44,19 +90,9 @@ function getFirebaseCredentials() {
     }
   }
 
-  // Helper to clean wrapping quotes
-  const cleanEnvVar = (val) => {
-    if (!val) return '';
-    let cleaned = val.trim();
-    if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
-      cleaned = cleaned.slice(1, -1);
-    }
-    return cleaned;
-  };
-
   const projectId = cleanEnvVar(process.env.FIREBASE_PROJECT_ID);
   const clientEmail = cleanEnvVar(process.env.FIREBASE_CLIENT_EMAIL);
-  const rawPrivateKey = cleanEnvVar(process.env.FIREBASE_PRIVATE_KEY);
+  const rawPrivateKey = process.env.FIREBASE_PRIVATE_KEY; // Keep raw for cleanPrivateKey helper
 
   debugInfo.projectId = projectId;
   debugInfo.clientEmail = clientEmail;
@@ -76,33 +112,11 @@ function getFirebaseCredentials() {
     !rawPrivateKey.includes('YOUR_PRIVATE_KEY_HERE')
   ) {
     try {
-      let formattedKey = rawPrivateKey;
-      
-      // If it is single-line (has no newlines), reconstruct the standard PEM formatting
-      if (!formattedKey.includes('\n')) {
-        const header = '-----BEGIN PRIVATE KEY-----';
-        const footer = '-----END PRIVATE KEY-----';
-        let body = formattedKey;
-        
-        if (body.startsWith(header)) body = body.substring(header.length);
-        if (body.endsWith(footer)) body = body.substring(0, body.length - footer.length);
-        
-        body = body.replace(/\s+/g, ''); // strip any spaces
-        
-        const lines = [];
-        for (let i = 0; i < body.length; i += 64) {
-          lines.push(body.substring(i, i + 64));
-        }
-        formattedKey = `${header}\n${lines.join('\n')}\n${footer}\n`;
-      } else {
-        // Replace escaped newlines
-        formattedKey = formattedKey.replace(/\\n/g, '\n');
-      }
-
+      const privateKey = cleanPrivateKey(rawPrivateKey);
       return cert({
         projectId,
         clientEmail,
-        privateKey: formattedKey,
+        privateKey,
       });
     } catch (e) {
       debugInfo.certError = e.message || e.toString();
