@@ -84,6 +84,74 @@ export default function App() {
     }
   }, [session]);
 
+  const [currentUserName, setCurrentUserName] = useState('');
+
+  useEffect(() => {
+    if (session) {
+      setCurrentUserName(session.name || session.username);
+    } else {
+      setCurrentUserName('');
+    }
+  }, [session]);
+
+  // Real-time synchronization of logged-in user's name
+  useEffect(() => {
+    if (session && session.role !== 'superadmin') {
+      let unsubscribe = null;
+      let pollingTimer = null;
+
+      const syncUserName = (usersList) => {
+        const currentUser = usersList.find(u => u.id === session.id);
+        if (currentUser && currentUser.name) {
+          setCurrentUserName(currentUser.name);
+        }
+      };
+
+      const setupRealtimeUsers = async () => {
+        try {
+          const { db, isFirebaseConfigured } = await import('./firebase');
+          const { doc, onSnapshot } = await import('firebase/firestore');
+
+          if (isFirebaseConfigured && db) {
+            unsubscribe = onSnapshot(doc(db, 'tenants', session.tenantId || 'default', 'tables', 'users'), (docSnap) => {
+              if (docSnap.exists()) {
+                syncUserName(docSnap.data().data || []);
+              }
+            }, (err) => {
+              console.warn('Firestore users listener failed, falling back to polling:', err);
+              startPolling();
+            });
+          } else {
+            startPolling();
+          }
+        } catch (err) {
+          console.warn('Failed to setup Firebase real-time users, falling back to polling:', err);
+          startPolling();
+        }
+      };
+
+      const startPolling = () => {
+        const poll = async () => {
+          try {
+            const usersList = await api.getUsers();
+            syncUserName(usersList);
+          } catch (err) {
+            console.error('Error polling users', err);
+          }
+        };
+        poll();
+        pollingTimer = setInterval(poll, 8000);
+      };
+
+      setupRealtimeUsers();
+
+      return () => {
+        if (unsubscribe) unsubscribe();
+        if (pollingTimer) clearInterval(pollingTimer);
+      };
+    }
+  }, [session]);
+
   const loadNotifications = async () => {
     try {
       const data = await api.getNotifications();
@@ -233,7 +301,7 @@ export default function App() {
           <button className="menu-toggle-btn" onClick={() => setMenuHidden(!menuHidden)} title="Toggle Menu">
             ☰
           </button>
-          🥤 <span>{t('title')}</span>
+          <span>{t('title')}</span>
         </div>
 
         <div className="nav-controls">
@@ -249,7 +317,7 @@ export default function App() {
 
           {/* User Badge */}
           <div className={`role-badge ${session.role}`}>
-            {session.name} ({t(session.role)})
+            {currentUserName || session.name} ({t(session.role)})
           </div>
 
           {/* Notification bell */}

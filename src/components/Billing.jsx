@@ -73,7 +73,7 @@ export default function Billing({ orderId, t, lang, onBack }) {
       return `${name} (${item.cases}C, ${item.bottles}B)`;
     }).join(', ');
 
-    const message = `*VASANTHAM DISTRIBUTORS*\n` +
+    const message = `*${t('company_name')}*\n` +
       `Invoice No: ${order.invoice_number}\n` +
       `Date: ${new Date(order.order_date).toLocaleDateString()}\n` +
       `Shop: ${shopName}\n` +

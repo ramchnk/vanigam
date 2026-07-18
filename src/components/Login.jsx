@@ -22,18 +22,7 @@ export default function Login({ setSession, t, theme, setTheme, lang, setLang })
     }
   };
 
-  const handleQuickLogin = async (userType) => {
-    setError('');
-    setLoading(true);
-    try {
-      const data = await api.login(tenantId || 'demo_tenant', userType, '123');
-      setSession(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   return (
     <div className="login-container" style={{ position: 'relative' }}>
@@ -48,7 +37,7 @@ export default function Login({ setSession, t, theme, setTheme, lang, setLang })
 
       <div className="glass-card login-card">
         <div className="login-header">
-          <h1>🥤 {t('title')}</h1>
+          <h1>{t('title')}</h1>
           <p>{t('login')}</p>
         </div>
 
@@ -98,22 +87,7 @@ export default function Login({ setSession, t, theme, setTheme, lang, setLang })
           </button>
         </form>
 
-        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
-            Quick Demo Login / விரைவு உள்நுழைவு:
-          </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center' }}>
-            <button className="language-btn" onClick={() => handleQuickLogin('admin')} disabled={loading}>
-              👨‍💼 {t('admin')}
-            </button>
-            <button className="language-btn" onClick={() => handleQuickLogin('sales')} disabled={loading}>
-              💼 {t('salesman')}
-            </button>
-            <button className="language-btn" onClick={() => handleQuickLogin('delivery')} disabled={loading}>
-              🚚 {t('delivery_man')}
-            </button>
-          </div>
-        </div>
+
       </div>
     </div>
   );

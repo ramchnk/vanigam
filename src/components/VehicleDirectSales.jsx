@@ -1102,7 +1102,7 @@ export default function VehicleDirectSales({ t, lang, onBillSelected, session })
             <div className="invoice-card" style={{ border: '1px solid var(--border-color)', padding: '1.5rem', background: '#fff', color: '#000', borderRadius: '8px' }}>
               
               <div style={{ textAlign: 'center', marginBottom: '1.25rem', borderBottom: '1.5px dashed #000', paddingBottom: '0.75rem' }}>
-                <h2 style={{ margin: '0 0 0.25rem 0', fontSize: '1.4rem', letterSpacing: '1px', fontWeight: '800' }}>VASANTHAM DISTRIBUTORS</h2>
+                <h2 style={{ margin: '0 0 0.25rem 0', fontSize: '1.4rem', letterSpacing: '1px', fontWeight: '800' }}>{t('company_name')}</h2>
                 <p style={{ margin: '0 0 0.25rem 0', fontSize: '10px', color: '#334155' }}>{t('company_address')}</p>
                 <p style={{ margin: 0, fontSize: '11px', fontWeight: 'bold' }}>{t('company_gst')}</p>
               </div>

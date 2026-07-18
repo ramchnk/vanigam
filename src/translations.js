@@ -1,7 +1,7 @@
 export const translations = {
   en: {
     // Navigation & Roles
-    title: "Vasantham Cool Drinks",
+    title: "Vanigam",
     admin: "Admin",
     salesman: "Salesman",
     delivery_man: "Delivery Man",
@@ -204,7 +204,7 @@ export const translations = {
   },
   ta: {
     // Navigation & Roles
-    title: "வசந்தம் கூல் டிரிங்க்ஸ்",
+    title: "வணிகம்",
     admin: "நிர்வாகி (Admin)",
     salesman: "விற்பனையாளர் (Salesman)",
     delivery_man: "டெலிவரி மேன்",
