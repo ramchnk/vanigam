@@ -3,7 +3,7 @@ import cors from 'cors';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { db as firestoreDb, isMock as isFirebaseMock, initError as firebaseInitError, credentialSource as firebaseCredSource } from './firebaseAdmin.js';
+import { db as firestoreDb, isMock as isFirebaseMock, initError as firebaseInitError, credentialSource as firebaseCredSource, debugInfo as firebaseDebugInfo } from './firebaseAdmin.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -297,6 +297,7 @@ app.get('/api/debug', (req, res) => {
     isFirebaseMock,
     firebaseInitError,
     firebaseCredSource,
+    firebaseDebugInfo,
     envDetected: {
       FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID || 'missing',
       FIREBASE_CLIENT_EMAIL: process.env.FIREBASE_CLIENT_EMAIL || 'missing',
