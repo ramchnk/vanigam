@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import api from '../api';
 
 export default function Login({ setSession, t, theme, setTheme, lang, setLang }) {
+  const [tenantId, setTenantId] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -12,7 +13,7 @@ export default function Login({ setSession, t, theme, setTheme, lang, setLang })
     setError('');
     setLoading(true);
     try {
-      const data = await api.login(username, password);
+      const data = await api.login(tenantId, username, password);
       setSession(data);
     } catch (err) {
       setError(err.message || 'Authentication failed');
@@ -25,7 +26,7 @@ export default function Login({ setSession, t, theme, setTheme, lang, setLang })
     setError('');
     setLoading(true);
     try {
-      const data = await api.login(userType, '123');
+      const data = await api.login(tenantId || 'demo_tenant', userType, '123');
       setSession(data);
     } catch (err) {
       setError(err.message);
@@ -58,6 +59,17 @@ export default function Login({ setSession, t, theme, setTheme, lang, setLang })
         )}
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div className="form-group">
+            <label>Company Code / Tenant ID</label>
+            <input
+              type="text"
+              className="form-input"
+              value={tenantId}
+              onChange={(e) => setTenantId(e.target.value)}
+              required
+              placeholder="e.g. COMPANY_123"
+            />
+          </div>
           <div className="form-group">
             <label>{t('username')}</label>
             <input

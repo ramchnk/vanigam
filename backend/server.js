@@ -7,7 +7,7 @@ import { db as firestoreDb, isMock as isFirebaseMock } from './firebaseAdmin.js'
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const dbPath = path.join(__dirname, 'db.json');
+const getDbPath = (tenantId) => path.join(__dirname, `db_${tenantId}.json`);
 
 const app = express();
 app.use(cors());
@@ -29,10 +29,10 @@ function releaseLock() {
 let cachedDB = null;
 let cachedTimestamp = 0;
 
-async function readDB() {
+async function readDB(tenantId) {
   if (isFirebaseMock) {
     try {
-      const data = await fs.readFile(dbPath, 'utf8');
+      const data = await fs.readFile(getDbPath(tenantId), 'utf8');
       const db = JSON.parse(data);
       if (!db.vehicles) db.vehicles = [];
       if (!db.vehicle_stock) db.vehicle_stock = [];
@@ -46,7 +46,7 @@ async function readDB() {
   }
 
   try {
-    const metaRef = firestoreDb.collection('tables').doc('_metadata');
+    const metaRef = firestoreDb.collection('tenants').doc(tenantId).collection('tables').doc('_metadata');
     const metaSnap = await metaRef.get();
     
     let lastUpdated = 0;
@@ -86,9 +86,9 @@ async function readDB() {
   }
 }
 
-async function writeDB(data) {
+async function writeDB(tenantId, data) {
   if (isFirebaseMock) {
-    await fs.writeFile(dbPath, JSON.stringify(data, null, 2), 'utf8');
+    await fs.writeFile(getDbPath(tenantId), JSON.stringify(data, null, 2), 'utf8');
     return;
   }
 
@@ -108,7 +108,7 @@ async function writeDB(data) {
       const newDataStr = JSON.stringify(data[key] || []);
 
       if (oldDataStr !== newDataStr) {
-        const docRef = firestoreDb.collection('tables').doc(key);
+        const docRef = firestoreDb.collection('tenants').doc(tenantId).collection('tables').doc(key);
         batch.set(docRef, { data: data[key] || [] });
         hasChanges = true;
       }
@@ -130,8 +130,45 @@ async function writeDB(data) {
   }
 }
 
+// System DB Helpers
+const systemDbPath = path.join(__dirname, 'db_system.json');
+
+async function readSystemDB() {
+  if (isFirebaseMock) {
+    try {
+      const data = await fs.readFile(systemDbPath, 'utf8');
+      return JSON.parse(data);
+    } catch (error) {
+      return { tenants: [] };
+    }
+  }
+
+  try {
+    const docSnap = await firestoreDb.collection('system').doc('config').get();
+    if (docSnap.exists) {
+      return docSnap.data();
+    }
+    return { tenants: [] };
+  } catch (err) {
+    console.error('Error reading system DB:', err);
+    return { tenants: [] };
+  }
+}
+
+async function writeSystemDB(data) {
+  if (isFirebaseMock) {
+    await fs.writeFile(systemDbPath, JSON.stringify(data, null, 2), 'utf8');
+    return;
+  }
+  try {
+    await firestoreDb.collection('system').doc('config').set(data);
+  } catch (err) {
+    console.error('Error writing system DB:', err);
+  }
+}
+
 // Initial Data Seeding
-async function seedDB() {
+async function seedDB(tenantId) {
   const users = [
     { id: 'u1', username: 'admin', password: '123', role: 'admin', name: 'Admin Murugan', mobile: '9876543210', active: true },
     { id: 'u2', username: 'sales', password: '123', role: 'salesman', name: 'Salesman Karthik', mobile: '9876543211', active: true },
@@ -235,34 +272,152 @@ async function seedDB() {
     recycle_bin: []
   };
 
-  await writeDB(db);
+  await writeDB(tenantId, db);
   return db;
 }
+
+// Add req.tenantId middleware
+app.use((req, res, next) => {
+  if (req.path === '/api/login' || req.path.startsWith('/api/system')) {
+    return next();
+  }
+  const tenantId = req.headers['x-tenant-id'];
+  if (!tenantId) {
+    return res.status(400).json({ error: 'Missing x-tenant-id header' });
+  }
+  req.tenantId = tenantId;
+  next();
+});
 
 // ---------------- REST API ENDPOINTS ----------------
 
 // Auth
 app.post('/api/login', async (req, res) => {
-  const { username, password } = req.body;
-  const db = await readDB();
+  const { tenantId, username, password } = req.body;
+  if (!tenantId) return res.status(400).json({ error: 'Company Code (Tenant ID) is required' });
+  
+  if (tenantId === 'SYSTEM') {
+    if (username === 'superadmin' && password === 'superadmin123') {
+      return res.json({ id: 'sys_1', username: 'superadmin', role: 'superadmin', name: 'Super Admin', mobile: '', tenantId: 'SYSTEM' });
+    }
+    return res.status(401).json({ error: 'Invalid super admin credentials' });
+  }
+
+  const systemDB = await readSystemDB();
+  const tenant = systemDB.tenants.find(t => t.id === tenantId);
+  if (!tenant) {
+    return res.status(404).json({ error: 'Company Code not found. Please contact Super Admin.' });
+  }
+  if (!tenant.active) {
+    return res.status(403).json({ error: 'Company account is deactivated' });
+  }
+
+  const db = await readDB(tenantId);
   const user = db.users.find(u => u.username === username && u.password === password && u.active);
   if (user) {
-    res.json({ id: user.id, username: user.username, role: user.role, name: user.name, mobile: user.mobile });
+    res.json({ id: user.id, username: user.username, role: user.role, name: user.name, mobile: user.mobile, tenantId });
   } else {
     res.status(401).json({ error: 'Invalid credentials or inactive user' });
   }
 });
 
+// System / Tenants
+app.get('/api/system/tenants', async (req, res) => {
+  if (req.headers['x-tenant-id'] !== 'SYSTEM') return res.status(403).json({ error: 'Unauthorized' });
+  const systemDB = await readSystemDB();
+  res.json(systemDB.tenants || []);
+});
+
+app.post('/api/system/tenants', async (req, res) => {
+  if (req.headers['x-tenant-id'] !== 'SYSTEM') return res.status(403).json({ error: 'Unauthorized' });
+  await acquireLock();
+  try {
+    const systemDB = await readSystemDB();
+    const { id, name, adminUsername, adminPassword } = req.body;
+    
+    if (!id || !name) {
+      return res.status(400).json({ error: 'Tenant ID and Name are required' });
+    }
+    
+    if (systemDB.tenants && systemDB.tenants.some(t => t.id === id.toUpperCase())) {
+      return res.status(400).json({ error: 'Tenant ID already exists' });
+    }
+
+    const newTenant = {
+      id: id.toUpperCase(),
+      name,
+      active: true,
+      created_at: new Date().toISOString()
+    };
+
+    if (!systemDB.tenants) systemDB.tenants = [];
+    systemDB.tenants.push(newTenant);
+    await writeSystemDB(systemDB);
+    
+    // Seed the database for this new tenant
+    await seedDB(newTenant.id, adminUsername, adminPassword);
+
+    res.status(201).json(newTenant);
+  } finally {
+    releaseLock();
+  }
+});
+
+app.put('/api/system/tenants/:id/status', async (req, res) => {
+  if (req.headers['x-tenant-id'] !== 'SYSTEM') return res.status(403).json({ error: 'Unauthorized' });
+  await acquireLock();
+  try {
+    const systemDB = await readSystemDB();
+    if (!systemDB.tenants) systemDB.tenants = [];
+    const tenant = systemDB.tenants.find(t => t.id === req.params.id);
+    if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
+    
+    tenant.active = req.body.active;
+    await writeSystemDB(systemDB);
+    res.json(tenant);
+  } finally {
+    releaseLock();
+  }
+});
+
+app.delete('/api/system/tenants/:id', async (req, res) => {
+  if (req.headers['x-tenant-id'] !== 'SYSTEM') return res.status(403).json({ error: 'Unauthorized' });
+  await acquireLock();
+  try {
+    const systemDB = await readSystemDB();
+    if (!systemDB.tenants) systemDB.tenants = [];
+    const tenantIndex = systemDB.tenants.findIndex(t => t.id === req.params.id);
+    if (tenantIndex === -1) return res.status(404).json({ error: 'Tenant not found' });
+    
+    // Remove tenant from system DB
+    systemDB.tenants.splice(tenantIndex, 1);
+    await writeSystemDB(systemDB);
+
+    // Optionally delete the physical db file if local
+    if (isFirebaseMock) {
+      const tenantDbPath = path.join(__dirname, `db_${req.params.id}.json`);
+      const fsModule = require('fs');
+      if (fsModule.existsSync(tenantDbPath)) {
+        fsModule.unlinkSync(tenantDbPath);
+      }
+    }
+
+    res.json({ success: true });
+  } finally {
+    releaseLock();
+  }
+});
+
 // Users
 app.get('/api/users', async (req, res) => {
-  const db = await readDB();
+  const db = await readDB(req.tenantId);
   res.json(db.users);
 });
 
 app.post('/api/users', async (req, res) => {
   await acquireLock();
   try {
-    const db = await readDB();
+    const db = await readDB(req.tenantId);
     const { username, password, role, name, mobile, active } = req.body;
     
     // Check duplicate username
@@ -281,7 +436,7 @@ app.post('/api/users', async (req, res) => {
     };
 
     db.users.push(newUser);
-    await writeDB(db);
+    await writeDB(req.tenantId, db);
     res.status(201).json(newUser);
   } finally {
     releaseLock();
@@ -291,7 +446,7 @@ app.post('/api/users', async (req, res) => {
 app.put('/api/users/:id', async (req, res) => {
   await acquireLock();
   try {
-    const db = await readDB();
+    const db = await readDB(req.tenantId);
     const index = db.users.findIndex(u => u.id === req.params.id);
     if (index === -1) {
       return res.status(404).json({ error: 'User not found' });
@@ -303,7 +458,7 @@ app.put('/api/users/:id', async (req, res) => {
     }
 
     db.users[index] = { ...db.users[index], ...req.body };
-    await writeDB(db);
+    await writeDB(req.tenantId, db);
     res.json(db.users[index]);
   } finally {
     releaseLock();
@@ -313,7 +468,7 @@ app.put('/api/users/:id', async (req, res) => {
 app.delete('/api/users/:id', async (req, res) => {
   await acquireLock();
   try {
-    const db = await readDB();
+    const db = await readDB(req.tenantId);
     const userId = req.params.id;
 
     // Constrain deletion if user is assigned to route or has bookings
@@ -327,7 +482,7 @@ app.delete('/api/users/:id', async (req, res) => {
     }
 
     db.users = db.users.filter(u => u.id !== userId);
-    await writeDB(db);
+    await writeDB(req.tenantId, db);
     res.json({ success: true });
   } finally {
     releaseLock();
@@ -336,14 +491,14 @@ app.delete('/api/users/:id', async (req, res) => {
 
 // Routes CRUD
 app.get('/api/routes', async (req, res) => {
-  const db = await readDB();
+  const db = await readDB(req.tenantId);
   res.json(db.routes);
 });
 
 app.post('/api/routes', async (req, res) => {
   await acquireLock();
   try {
-    const db = await readDB();
+    const db = await readDB(req.tenantId);
     const newRoute = {
       id: `r_${Date.now()}`,
       name_en: req.body.name_en,
@@ -352,7 +507,7 @@ app.post('/api/routes', async (req, res) => {
       delivery_man_id: req.body.delivery_man_id || ''
     };
     db.routes.push(newRoute);
-    await writeDB(db);
+    await writeDB(req.tenantId, db);
     res.status(201).json(newRoute);
   } finally {
     releaseLock();
@@ -362,11 +517,11 @@ app.post('/api/routes', async (req, res) => {
 app.put('/api/routes/:id', async (req, res) => {
   await acquireLock();
   try {
-    const db = await readDB();
+    const db = await readDB(req.tenantId);
     const index = db.routes.findIndex(r => r.id === req.params.id);
     if (index !== -1) {
       db.routes[index] = { ...db.routes[index], ...req.body };
-      await writeDB(db);
+      await writeDB(req.tenantId, db);
       res.json(db.routes[index]);
     } else {
       res.status(404).json({ error: 'Route not found' });
@@ -379,7 +534,7 @@ app.put('/api/routes/:id', async (req, res) => {
 app.delete('/api/routes/:id', async (req, res) => {
   await acquireLock();
   try {
-    const db = await readDB();
+    const db = await readDB(req.tenantId);
     const routeId = req.params.id;
     const route = db.routes.find(r => r.id === routeId);
     if (!route) {
@@ -399,7 +554,7 @@ app.delete('/api/routes/:id', async (req, res) => {
       expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
     });
 
-    await writeDB(db);
+    await writeDB(req.tenantId, db);
     res.json({ success: true });
   } finally {
     releaseLock();
@@ -408,14 +563,14 @@ app.delete('/api/routes/:id', async (req, res) => {
 
 // Shops CRUD
 app.get('/api/shops', async (req, res) => {
-  const db = await readDB();
+  const db = await readDB(req.tenantId);
   res.json(db.shops);
 });
 
 app.post('/api/shops', async (req, res) => {
   await acquireLock();
   try {
-    const db = await readDB();
+    const db = await readDB(req.tenantId);
     const newShop = {
       id: `s_${Date.now()}`,
       name_en: req.body.name_en || req.body.name,
@@ -440,7 +595,7 @@ app.post('/api/shops', async (req, res) => {
         date: new Date().toISOString()
       });
     }
-    await writeDB(db);
+    await writeDB(req.tenantId, db);
     res.status(201).json(newShop);
   } finally {
     releaseLock();
@@ -450,7 +605,7 @@ app.post('/api/shops', async (req, res) => {
 app.put('/api/shops/:id', async (req, res) => {
   await acquireLock();
   try {
-    const db = await readDB();
+    const db = await readDB(req.tenantId);
     const index = db.shops.findIndex(s => s.id === req.params.id);
     if (index !== -1) {
       const prevOutstanding = db.shops[index].outstanding_amount;
@@ -470,7 +625,7 @@ app.put('/api/shops/:id', async (req, res) => {
       }
 
       db.shops[index] = updatedShop;
-      await writeDB(db);
+      await writeDB(req.tenantId, db);
       res.json(updatedShop);
     } else {
       res.status(404).json({ error: 'Shop not found' });
@@ -482,14 +637,14 @@ app.put('/api/shops/:id', async (req, res) => {
 
 // Products CRUD
 app.get('/api/products', async (req, res) => {
-  const db = await readDB();
+  const db = await readDB(req.tenantId);
   res.json(db.products);
 });
 
 app.post('/api/products', async (req, res) => {
   await acquireLock();
   try {
-    const db = await readDB();
+    const db = await readDB(req.tenantId);
     const newProduct = {
       id: `p_${Date.now()}`,
       name_en: req.body.name_en,
@@ -516,7 +671,7 @@ app.post('/api/products', async (req, res) => {
       running_stock_bottles: newProduct.current_stock_bottles,
       timestamp: new Date().toISOString()
     });
-    await writeDB(db);
+    await writeDB(req.tenantId, db);
     res.status(201).json(newProduct);
   } finally {
     releaseLock();
@@ -526,11 +681,11 @@ app.post('/api/products', async (req, res) => {
 app.put('/api/products/:id', async (req, res) => {
   await acquireLock();
   try {
-    const db = await readDB();
+    const db = await readDB(req.tenantId);
     const index = db.products.findIndex(p => p.id === req.params.id);
     if (index !== -1) {
       db.products[index] = { ...db.products[index], ...req.body };
-      await writeDB(db);
+      await writeDB(req.tenantId, db);
       res.json(db.products[index]);
     } else {
       res.status(404).json({ error: 'Product not found' });
@@ -542,14 +697,14 @@ app.put('/api/products/:id', async (req, res) => {
 
 // Purchases Entry
 app.get('/api/purchases', async (req, res) => {
-  const db = await readDB();
+  const db = await readDB(req.tenantId);
   res.json(db.purchases);
 });
 
 app.post('/api/purchases', async (req, res) => {
   await acquireLock();
   try {
-    const db = await readDB();
+    const db = await readDB(req.tenantId);
     const { supplier, product_id, cases, bottles, purchase_price } = req.body;
     
     const productIndex = db.products.findIndex(p => p.id === product_id);
@@ -599,7 +754,7 @@ app.post('/api/purchases', async (req, res) => {
       });
     }
 
-    await writeDB(db);
+    await writeDB(req.tenantId, db);
     res.status(201).json(newPurchase);
   } finally {
     releaseLock();
@@ -608,7 +763,7 @@ app.post('/api/purchases', async (req, res) => {
 
 // Stock Ledger
 app.get('/api/stock/ledger', async (req, res) => {
-  const db = await readDB();
+  const db = await readDB(req.tenantId);
   res.json(db.stock_ledger);
 });
 
@@ -616,7 +771,7 @@ app.get('/api/stock/ledger', async (req, res) => {
 app.post('/api/orders', async (req, res) => {
   await acquireLock();
   try {
-    const db = await readDB();
+    const db = await readDB(req.tenantId);
     const { shop_id, route_id, salesman_id, items, discount } = req.body;
     
     const shop = db.shops.find(s => s.id === shop_id);
@@ -766,7 +921,7 @@ app.post('/api/orders', async (req, res) => {
       created_at: new Date().toISOString()
     });
 
-    await writeDB(db);
+    await writeDB(req.tenantId, db);
     res.status(201).json({ order: newOrder, items: orderItemsToCreate });
   } finally {
     releaseLock();
@@ -774,25 +929,25 @@ app.post('/api/orders', async (req, res) => {
 });
 
 app.get('/api/orders', async (req, res) => {
-  const db = await readDB();
+  const db = await readDB(req.tenantId);
   res.json(db.orders);
 });
 
 app.get('/api/orders/items', async (req, res) => {
-  const db = await readDB();
+  const db = await readDB(req.tenantId);
   res.json(db.order_items);
 });
 
 // Deliveries Management
 app.get('/api/deliveries', async (req, res) => {
-  const db = await readDB();
+  const db = await readDB(req.tenantId);
   res.json(db.deliveries);
 });
 
 app.post('/api/deliveries/:id/complete', async (req, res) => {
   await acquireLock();
   try {
-    const db = await readDB();
+    const db = await readDB(req.tenantId);
     const deliveryIndex = db.deliveries.findIndex(d => d.id === req.params.id);
     if (deliveryIndex === -1) {
       return res.status(404).json({ error: 'Delivery not found' });
@@ -819,7 +974,7 @@ app.post('/api/deliveries/:id/complete', async (req, res) => {
       });
     }
 
-    await writeDB(db);
+    await writeDB(req.tenantId, db);
     res.json(delivery);
   } finally {
     releaseLock();
@@ -828,14 +983,14 @@ app.post('/api/deliveries/:id/complete', async (req, res) => {
 
 // Payments & Outstanding Collection
 app.get('/api/payments', async (req, res) => {
-  const db = await readDB();
+  const db = await readDB(req.tenantId);
   res.json(db.payments);
 });
 
 app.post('/api/payments', async (req, res) => {
   await acquireLock();
   try {
-    const db = await readDB();
+    const db = await readDB(req.tenantId);
     const { shop_id, order_id, collected_amount, payment_mode, transaction_number } = req.body;
     
     const shop = db.shops.find(s => s.id === shop_id);
@@ -868,7 +1023,7 @@ app.post('/api/payments', async (req, res) => {
       date: new Date().toISOString()
     });
 
-    await writeDB(db);
+    await writeDB(req.tenantId, db);
     res.status(201).json({ payment: newPayment, outstanding_amount: shop.outstanding_amount });
   } finally {
     releaseLock();
@@ -876,24 +1031,24 @@ app.post('/api/payments', async (req, res) => {
 });
 
 app.get('/api/outstanding/history', async (req, res) => {
-  const db = await readDB();
+  const db = await readDB(req.tenantId);
   res.json(db.outstanding_history);
 });
 
 // Notifications
 app.get('/api/notifications', async (req, res) => {
-  const db = await readDB();
+  const db = await readDB(req.tenantId);
   res.json(db.notifications);
 });
 
 app.post('/api/notifications/mark-read', async (req, res) => {
   await acquireLock();
   try {
-    const db = await readDB();
+    const db = await readDB(req.tenantId);
     db.notifications.forEach(n => {
       n.status = 'read';
     });
-    await writeDB(db);
+    await writeDB(req.tenantId, db);
     res.json({ success: true });
   } finally {
     releaseLock();
@@ -902,7 +1057,7 @@ app.post('/api/notifications/mark-read', async (req, res) => {
 
 // Reports Engine
 app.get('/api/reports/summary', async (req, res) => {
-  const db = await readDB();
+  const db = await readDB(req.tenantId);
   
   // 1. Daily Sales Summary (today)
   const today = new Date().toISOString().split('T')[0];
@@ -946,7 +1101,7 @@ app.get('/api/reports/summary', async (req, res) => {
 app.delete('/api/shops/:id', async (req, res) => {
   await acquireLock();
   try {
-    const db = await readDB();
+    const db = await readDB(req.tenantId);
     const shopId = req.params.id;
     // Check if shop has orders
     const hasOrders = db.orders.some(o => o.shop_id === shopId);
@@ -972,7 +1127,7 @@ app.delete('/api/shops/:id', async (req, res) => {
       expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
     });
 
-    await writeDB(db);
+    await writeDB(req.tenantId, db);
     res.json({ success: true });
   } finally {
     releaseLock();
@@ -983,7 +1138,7 @@ app.delete('/api/shops/:id', async (req, res) => {
 app.delete('/api/products/:id', async (req, res) => {
   await acquireLock();
   try {
-    const db = await readDB();
+    const db = await readDB(req.tenantId);
     const productId = req.params.id;
     // Check if product has order items or purchases
     const hasOrders = db.order_items.some(oi => oi.product_id === productId);
@@ -1010,7 +1165,7 @@ app.delete('/api/products/:id', async (req, res) => {
       expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
     });
 
-    await writeDB(db);
+    await writeDB(req.tenantId, db);
     res.json({ success: true });
   } finally {
     releaseLock();
@@ -1021,7 +1176,7 @@ app.delete('/api/products/:id', async (req, res) => {
 app.delete('/api/purchases/:id', async (req, res) => {
   await acquireLock();
   try {
-    const db = await readDB();
+    const db = await readDB(req.tenantId);
     const purchaseId = req.params.id;
     const purchase = db.purchases.find(p => p.id === purchaseId);
     if (!purchase) {
@@ -1067,7 +1222,7 @@ app.delete('/api/purchases/:id', async (req, res) => {
       expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
     });
 
-    await writeDB(db);
+    await writeDB(req.tenantId, db);
     res.json({ success: true });
   } finally {
     releaseLock();
@@ -1078,7 +1233,7 @@ app.delete('/api/purchases/:id', async (req, res) => {
 app.delete('/api/orders/:id', async (req, res) => {
   await acquireLock();
   try {
-    const db = await readDB();
+    const db = await readDB(req.tenantId);
     const orderId = req.params.id;
     const orderIndex = db.orders.findIndex(o => o.id === orderId);
     if (orderIndex === -1) {
@@ -1172,7 +1327,7 @@ app.delete('/api/orders/:id', async (req, res) => {
       expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
     });
 
-    await writeDB(db);
+    await writeDB(req.tenantId, db);
     res.json({ success: true });
   } finally {
     releaseLock();
@@ -1181,7 +1336,7 @@ app.delete('/api/orders/:id', async (req, res) => {
 
 // Recycle Bin Endpoints
 app.get('/api/recycle-bin', async (req, res) => {
-  const db = await readDB();
+  const db = await readDB(req.tenantId);
   if (!db.recycle_bin) db.recycle_bin = [];
   res.json(db.recycle_bin);
 });
@@ -1189,7 +1344,7 @@ app.get('/api/recycle-bin', async (req, res) => {
 app.post('/api/recycle-bin/:id/restore', async (req, res) => {
   await acquireLock();
   try {
-    const db = await readDB();
+    const db = await readDB(req.tenantId);
     const itemId = req.params.id;
     const item = db.recycle_bin.find(rb => rb.id === itemId);
     if (!item) {
@@ -1298,7 +1453,7 @@ app.post('/api/recycle-bin/:id/restore', async (req, res) => {
     }
 
     db.recycle_bin = db.recycle_bin.filter(rb => rb.id !== itemId);
-    await writeDB(db);
+    await writeDB(req.tenantId, db);
     res.json({ success: true });
   } finally {
     releaseLock();
@@ -1308,9 +1463,9 @@ app.post('/api/recycle-bin/:id/restore', async (req, res) => {
 app.delete('/api/recycle-bin/:id', async (req, res) => {
   await acquireLock();
   try {
-    const db = await readDB();
+    const db = await readDB(req.tenantId);
     db.recycle_bin = db.recycle_bin.filter(rb => rb.id !== req.params.id);
-    await writeDB(db);
+    await writeDB(req.tenantId, db);
     res.json({ success: true });
   } finally {
     releaseLock();
@@ -1318,16 +1473,17 @@ app.delete('/api/recycle-bin/:id', async (req, res) => {
 });
 
 // Auto cleanup cron for expired recycle bin items (older than 30 days)
-async function cleanupRecycleBin() {
+async function cleanupRecycleBin(tenantId) {
+  if (!tenantId) return;
   await acquireLock();
   try {
-    const db = await readDB();
+    const db = await readDB(req.tenantId);
     if (!db.recycle_bin) db.recycle_bin = [];
     const now = new Date().toISOString();
     const lenBefore = db.recycle_bin.length;
     db.recycle_bin = db.recycle_bin.filter(rb => rb.expires_at > now);
     if (db.recycle_bin.length !== lenBefore) {
-      await writeDB(db);
+      await writeDB(req.tenantId, db);
       console.log(`Recycle Bin Cleanup: Permanently purged ${lenBefore - db.recycle_bin.length} expired items.`);
     }
   } catch (err) {
@@ -1341,7 +1497,7 @@ async function cleanupRecycleBin() {
 
 // 1. Get all vehicles
 app.get('/api/vehicles', async (req, res) => {
-  const db = await readDB();
+  const db = await readDB(req.tenantId);
   res.json(db.vehicles || []);
 });
 
@@ -1349,7 +1505,7 @@ app.get('/api/vehicles', async (req, res) => {
 app.post('/api/vehicles', async (req, res) => {
   await acquireLock();
   try {
-    const db = await readDB();
+    const db = await readDB(req.tenantId);
     const newVehicle = {
       id: `v_${Date.now()}`,
       vehicle_number: req.body.vehicle_number,
@@ -1358,7 +1514,7 @@ app.post('/api/vehicles', async (req, res) => {
       status: req.body.status || 'active'
     };
     db.vehicles.push(newVehicle);
-    await writeDB(db);
+    await writeDB(req.tenantId, db);
     res.status(201).json(newVehicle);
   } finally {
     releaseLock();
@@ -1369,13 +1525,13 @@ app.post('/api/vehicles', async (req, res) => {
 app.put('/api/vehicles/:id', async (req, res) => {
   await acquireLock();
   try {
-    const db = await readDB();
+    const db = await readDB(req.tenantId);
     const idx = db.vehicles.findIndex(v => v.id === req.params.id);
     if (idx === -1) {
       return res.status(404).json({ error: 'Vehicle not found' });
     }
     db.vehicles[idx] = { ...db.vehicles[idx], ...req.body };
-    await writeDB(db);
+    await writeDB(req.tenantId, db);
     res.json(db.vehicles[idx]);
   } finally {
     releaseLock();
@@ -1386,12 +1542,12 @@ app.put('/api/vehicles/:id', async (req, res) => {
 app.delete('/api/vehicles/:id', async (req, res) => {
   await acquireLock();
   try {
-    const db = await readDB();
+    const db = await readDB(req.tenantId);
     db.vehicles = db.vehicles.filter(v => v.id !== req.params.id);
     if (db.vehicle_stock) {
       db.vehicle_stock = db.vehicle_stock.filter(s => s.vehicle_id !== req.params.id);
     }
-    await writeDB(db);
+    await writeDB(req.tenantId, db);
     res.json({ success: true });
   } finally {
     releaseLock();
@@ -1400,13 +1556,13 @@ app.delete('/api/vehicles/:id', async (req, res) => {
 
 // 5. Get current vehicle stock
 app.get('/api/vehicles/stock', async (req, res) => {
-  const db = await readDB();
+  const db = await readDB(req.tenantId);
   res.json(db.vehicle_stock || []);
 });
 
 // 6. Get dispatches
 app.get('/api/vehicles/dispatches', async (req, res) => {
-  const db = await readDB();
+  const db = await readDB(req.tenantId);
   res.json(db.vehicle_dispatches || []);
 });
 
@@ -1414,7 +1570,7 @@ app.get('/api/vehicles/dispatches', async (req, res) => {
 app.post('/api/vehicles/dispatch', async (req, res) => {
   await acquireLock();
   try {
-    const db = await readDB();
+    const db = await readDB(req.tenantId);
     const { vehicle_id, items } = req.body; // items: array of { product_id, cases, bottles }
     
     // Check if vehicle exists
@@ -1487,7 +1643,7 @@ app.post('/api/vehicles/dispatch', async (req, res) => {
     };
     db.vehicle_dispatches.push(newDispatch);
 
-    await writeDB(db);
+    await writeDB(req.tenantId, db);
     res.status(201).json(newDispatch);
   } finally {
     releaseLock();
@@ -1496,7 +1652,7 @@ app.post('/api/vehicles/dispatch', async (req, res) => {
 
 // 8. Get vehicle sales
 app.get('/api/vehicles/sales', async (req, res) => {
-  const db = await readDB();
+  const db = await readDB(req.tenantId);
   res.json(db.vehicle_sales || []);
 });
 
@@ -1504,7 +1660,7 @@ app.get('/api/vehicles/sales', async (req, res) => {
 app.post('/api/vehicles/sales', async (req, res) => {
   await acquireLock();
   try {
-    const db = await readDB();
+    const db = await readDB(req.tenantId);
     const { vehicle_id, shop_id, salesman_id, items, discount, payment_mode, upi_reference } = req.body;
     // items: array of { product_id, cases, bottles, price }
 
@@ -1591,7 +1747,7 @@ app.post('/api/vehicles/sales', async (req, res) => {
 
     db.vehicle_sales.push(newSale);
 
-    await writeDB(db);
+    await writeDB(req.tenantId, db);
     res.status(201).json(newSale);
   } finally {
     releaseLock();
@@ -1600,7 +1756,7 @@ app.post('/api/vehicles/sales', async (req, res) => {
 
 // 10. Get reconciliations
 app.get('/api/vehicles/reconciliations', async (req, res) => {
-  const db = await readDB();
+  const db = await readDB(req.tenantId);
   res.json(db.vehicle_reconciliations || []);
 });
 
@@ -1608,7 +1764,7 @@ app.get('/api/vehicles/reconciliations', async (req, res) => {
 app.post('/api/vehicles/reconcile', async (req, res) => {
   await acquireLock();
   try {
-    const db = await readDB();
+    const db = await readDB(req.tenantId);
     const { vehicle_id } = req.body;
     const vStocks = db.vehicle_stock.filter(s => s.vehicle_id === vehicle_id && s.current_stock_bottles > 0);
 
@@ -1659,7 +1815,7 @@ app.post('/api/vehicles/reconcile', async (req, res) => {
     };
     db.vehicle_reconciliations.push(newRecon);
 
-    await writeDB(db);
+    await writeDB(req.tenantId, db);
     res.status(200).json(newRecon);
   } finally {
     releaseLock();
@@ -1671,7 +1827,7 @@ const PORT = process.env.PORT || 5001;
 if (!process.env.VERCEL) {
   app.listen(PORT, async () => {
     console.log(`Distribution Backend running on port ${PORT}`);
-    await cleanupRecycleBin();
+    // await cleanupRecycleBin();
   });
 }
 

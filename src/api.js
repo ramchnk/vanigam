@@ -3,11 +3,21 @@ import { doc, getDoc } from 'firebase/firestore';
 
 const API_BASE = '/api';
 
+function apiFetch(url, options = {}) {
+  const headers = { ...options.headers };
+  const tenantId = localStorage.getItem('tenantId');
+  if (tenantId) {
+    headers['x-tenant-id'] = tenantId;
+  }
+  return fetch(url, { ...options, headers });
+}
+
+
 // Helper to load table data from Firestore directly (for real-time fallback/speed)
 async function getTableData(tableName, fallbackUrl) {
   if (isFirebaseConfigured && db) {
     try {
-      const docRef = doc(db, 'tables', tableName);
+      const docRef = doc(db, 'tenants', localStorage.getItem('tenantId') || 'default', 'tables', tableName);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         return docSnap.data().data || [];
@@ -17,21 +27,60 @@ async function getTableData(tableName, fallbackUrl) {
       console.warn(`Firestore read failed for "${tableName}", falling back to REST API:`, err);
     }
   }
-  const res = await fetch(fallbackUrl);
+  const res = await apiFetch(fallbackUrl);
   return res.json();
 }
 
 export const api = {
   // Auth
-  async login(username, password) {
-    const res = await fetch(`${API_BASE}/login`, {
+  async login(tenantId, username, password) {
+    localStorage.setItem('tenantId', tenantId);
+    const res = await apiFetch(`${API_BASE}/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify({ tenantId, username, password })
     });
     if (!res.ok) {
       const err = await res.json();
       throw new Error(err.error || 'Login failed');
+    }
+    return res.json();
+  },
+
+
+
+  // System / Super Admin
+  async getTenants() {
+    const res = await apiFetch(`${API_BASE}/system/tenants`);
+    return res.json();
+  },
+  async createTenant(tenantData) {
+    const res = await apiFetch(`${API_BASE}/system/tenants`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(tenantData)
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to create tenant');
+    }
+    return res.json();
+  },
+  async updateTenantStatus(id, active) {
+    const res = await apiFetch(`${API_BASE}/system/tenants/${id}/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ active })
+    });
+    return res.json();
+  },
+  async deleteTenant(id) {
+    const res = await apiFetch(`${API_BASE}/system/tenants/${id}`, {
+      method: 'DELETE'
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to delete tenant');
     }
     return res.json();
   },
@@ -45,7 +94,7 @@ export const api = {
     return getTableData('routes', `${API_BASE}/routes`);
   },
   async createRoute(routeData) {
-    const res = await fetch(`${API_BASE}/routes`, {
+    const res = await apiFetch(`${API_BASE}/routes`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(routeData)
@@ -53,7 +102,7 @@ export const api = {
     return res.json();
   },
   async updateRoute(id, routeData) {
-    const res = await fetch(`${API_BASE}/routes/${id}`, {
+    const res = await apiFetch(`${API_BASE}/routes/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(routeData)
@@ -61,7 +110,7 @@ export const api = {
     return res.json();
   },
   async deleteRoute(id) {
-    const res = await fetch(`${API_BASE}/routes/${id}`, {
+    const res = await apiFetch(`${API_BASE}/routes/${id}`, {
       method: 'DELETE'
     });
     return res.json();
@@ -72,7 +121,7 @@ export const api = {
     return getTableData('shops', `${API_BASE}/shops`);
   },
   async createShop(shopData) {
-    const res = await fetch(`${API_BASE}/shops`, {
+    const res = await apiFetch(`${API_BASE}/shops`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(shopData)
@@ -84,7 +133,7 @@ export const api = {
     return res.json();
   },
   async updateShop(id, shopData) {
-    const res = await fetch(`${API_BASE}/shops/${id}`, {
+    const res = await apiFetch(`${API_BASE}/shops/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(shopData)
@@ -97,7 +146,7 @@ export const api = {
     return getTableData('products', `${API_BASE}/products`);
   },
   async createProduct(productData) {
-    const res = await fetch(`${API_BASE}/products`, {
+    const res = await apiFetch(`${API_BASE}/products`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(productData)
@@ -105,7 +154,7 @@ export const api = {
     return res.json();
   },
   async updateProduct(id, productData) {
-    const res = await fetch(`${API_BASE}/products/${id}`, {
+    const res = await apiFetch(`${API_BASE}/products/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(productData)
@@ -118,7 +167,7 @@ export const api = {
     return getTableData('purchases', `${API_BASE}/purchases`);
   },
   async createPurchase(purchaseData) {
-    const res = await fetch(`${API_BASE}/purchases`, {
+    const res = await apiFetch(`${API_BASE}/purchases`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(purchaseData)
@@ -143,7 +192,7 @@ export const api = {
     return getTableData('order_items', `${API_BASE}/orders/items`);
   },
   async createOrder(orderData) {
-    const res = await fetch(`${API_BASE}/orders`, {
+    const res = await apiFetch(`${API_BASE}/orders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(orderData)
@@ -160,7 +209,7 @@ export const api = {
     return getTableData('deliveries', `${API_BASE}/deliveries`);
   },
   async completeDelivery(id, remarks) {
-    const res = await fetch(`${API_BASE}/deliveries/${id}/complete`, {
+    const res = await apiFetch(`${API_BASE}/deliveries/${id}/complete`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ remarks })
@@ -173,7 +222,7 @@ export const api = {
     return getTableData('payments', `${API_BASE}/payments`);
   },
   async createPayment(paymentData) {
-    const res = await fetch(`${API_BASE}/payments`, {
+    const res = await apiFetch(`${API_BASE}/payments`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(paymentData)
@@ -193,7 +242,7 @@ export const api = {
     return getTableData('notifications', `${API_BASE}/notifications`);
   },
   async markNotificationsRead() {
-    const res = await fetch(`${API_BASE}/notifications/mark-read`, {
+    const res = await apiFetch(`${API_BASE}/notifications/mark-read`, {
       method: 'POST'
     });
     return res.json();
@@ -201,13 +250,13 @@ export const api = {
 
   // Reports
   async getReportSummary() {
-    const res = await fetch(`${API_BASE}/reports/summary`);
+    const res = await apiFetch(`${API_BASE}/reports/summary`);
     return res.json();
   },
 
   // Corrections & Cancellations
   async deleteShop(id) {
-    const res = await fetch(`${API_BASE}/shops/${id}`, {
+    const res = await apiFetch(`${API_BASE}/shops/${id}`, {
       method: 'DELETE'
     });
     if (!res.ok) {
@@ -217,7 +266,7 @@ export const api = {
     return res.json();
   },
   async deleteProduct(id) {
-    const res = await fetch(`${API_BASE}/products/${id}`, {
+    const res = await apiFetch(`${API_BASE}/products/${id}`, {
       method: 'DELETE'
     });
     if (!res.ok) {
@@ -227,7 +276,7 @@ export const api = {
     return res.json();
   },
   async deletePurchase(id) {
-    const res = await fetch(`${API_BASE}/purchases/${id}`, {
+    const res = await apiFetch(`${API_BASE}/purchases/${id}`, {
       method: 'DELETE'
     });
     if (!res.ok) {
@@ -237,7 +286,7 @@ export const api = {
     return res.json();
   },
   async deleteOrder(id) {
-    const res = await fetch(`${API_BASE}/orders/${id}`, {
+    const res = await apiFetch(`${API_BASE}/orders/${id}`, {
       method: 'DELETE'
     });
     if (!res.ok) {
@@ -249,7 +298,7 @@ export const api = {
 
   // User Access Management
   async createUser(userData) {
-    const res = await fetch(`${API_BASE}/users`, {
+    const res = await apiFetch(`${API_BASE}/users`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(userData)
@@ -261,7 +310,7 @@ export const api = {
     return res.json();
   },
   async updateUser(id, userData) {
-    const res = await fetch(`${API_BASE}/users/${id}`, {
+    const res = await apiFetch(`${API_BASE}/users/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(userData)
@@ -273,7 +322,7 @@ export const api = {
     return res.json();
   },
   async deleteUser(id) {
-    const res = await fetch(`${API_BASE}/users/${id}`, {
+    const res = await apiFetch(`${API_BASE}/users/${id}`, {
       method: 'DELETE'
     });
     if (!res.ok) {
@@ -288,7 +337,7 @@ export const api = {
     return getTableData('recycle_bin', `${API_BASE}/recycle-bin`);
   },
   async restoreRecycleBinItem(id) {
-    const res = await fetch(`${API_BASE}/recycle-bin/${id}/restore`, {
+    const res = await apiFetch(`${API_BASE}/recycle-bin/${id}/restore`, {
       method: 'POST'
     });
     if (!res.ok) {
@@ -298,7 +347,7 @@ export const api = {
     return res.json();
   },
   async purgeRecycleBinItem(id) {
-    const res = await fetch(`${API_BASE}/recycle-bin/${id}`, {
+    const res = await apiFetch(`${API_BASE}/recycle-bin/${id}`, {
       method: 'DELETE'
     });
     if (!res.ok) {
@@ -313,7 +362,7 @@ export const api = {
     return getTableData('vehicles', `${API_BASE}/vehicles`);
   },
   async createVehicle(vehicleData) {
-    const res = await fetch(`${API_BASE}/vehicles`, {
+    const res = await apiFetch(`${API_BASE}/vehicles`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(vehicleData)
@@ -321,7 +370,7 @@ export const api = {
     return res.json();
   },
   async updateVehicle(id, vehicleData) {
-    const res = await fetch(`${API_BASE}/vehicles/${id}`, {
+    const res = await apiFetch(`${API_BASE}/vehicles/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(vehicleData)
@@ -329,7 +378,7 @@ export const api = {
     return res.json();
   },
   async deleteVehicle(id) {
-    const res = await fetch(`${API_BASE}/vehicles/${id}`, {
+    const res = await apiFetch(`${API_BASE}/vehicles/${id}`, {
       method: 'DELETE'
     });
     return res.json();
@@ -341,7 +390,7 @@ export const api = {
     return getTableData('vehicle_dispatches', `${API_BASE}/vehicles/dispatches`);
   },
   async dispatchVehicleStock(dispatchData) {
-    const res = await fetch(`${API_BASE}/vehicles/dispatch`, {
+    const res = await apiFetch(`${API_BASE}/vehicles/dispatch`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(dispatchData)
@@ -356,7 +405,7 @@ export const api = {
     return getTableData('vehicle_sales', `${API_BASE}/vehicles/sales`);
   },
   async createVehicleSale(saleData) {
-    const res = await fetch(`${API_BASE}/vehicles/sales`, {
+    const res = await apiFetch(`${API_BASE}/vehicles/sales`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(saleData)
@@ -371,7 +420,7 @@ export const api = {
     return getTableData('vehicle_reconciliations', `${API_BASE}/vehicles/reconciliations`);
   },
   async reconcileVehicleStock(reconcileData) {
-    const res = await fetch(`${API_BASE}/vehicles/reconcile`, {
+    const res = await apiFetch(`${API_BASE}/vehicles/reconcile`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(reconcileData)

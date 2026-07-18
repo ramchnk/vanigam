@@ -17,6 +17,7 @@ import Billing from './components/Billing';
 import UserMgr from './components/UserMgr';
 import RecycleBin from './components/RecycleBin';
 import VehicleDirectSales from './components/VehicleDirectSales';
+import SuperAdminDashboard from './components/SuperAdminDashboard';
 
 export default function App() {
   const [lang, setLang] = useState('en'); // 'en' or 'ta'
@@ -50,7 +51,7 @@ export default function App() {
           const { doc, onSnapshot } = await import('firebase/firestore');
 
           if (isFirebaseConfigured && db) {
-            unsubscribe = onSnapshot(doc(db, 'tables', 'notifications'), (docSnap) => {
+            unsubscribe = onSnapshot(doc(db, 'tenants', session.tenantId || 'default', 'tables', 'notifications'), (docSnap) => {
               if (docSnap.exists()) {
                 setNotifications(docSnap.data().data || []);
               } else {
@@ -130,6 +131,10 @@ export default function App() {
     const role = session.role;
     const links = [{ id: 'dashboard', label: t('dashboard'), icon: '📊' }];
 
+    if (role === 'superadmin') {
+      return [{ id: 'dashboard', label: 'Super Admin', icon: '👑' }];
+    }
+
     if (role === 'admin') {
       links.push(
         { id: 'routes', label: t('route_mgmt'), icon: '🗺️' },
@@ -189,6 +194,7 @@ export default function App() {
 
     switch (activeTab) {
       case 'dashboard':
+        if (session.role === 'superadmin') return <SuperAdminDashboard t={t} lang={lang} />;
         return <Dashboard t={t} lang={lang} />;
       case 'routes':
         return <RouteMgr t={t} lang={lang} />;
