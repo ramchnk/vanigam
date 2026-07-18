@@ -35,21 +35,35 @@ function getFirebaseCredentials() {
     }
   }
 
+  // Helper to clean wrapping quotes
+  const cleanEnvVar = (val) => {
+    if (!val) return '';
+    let cleaned = val.trim();
+    if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
+      cleaned = cleaned.slice(1, -1);
+    }
+    return cleaned;
+  };
+
+  const projectId = cleanEnvVar(process.env.FIREBASE_PROJECT_ID);
+  const clientEmail = cleanEnvVar(process.env.FIREBASE_CLIENT_EMAIL);
+  const rawPrivateKey = cleanEnvVar(process.env.FIREBASE_PRIVATE_KEY);
+
   // 2. Try individual environment variables (only if actual client email is provided)
   if (
-    process.env.FIREBASE_PROJECT_ID &&
-    process.env.FIREBASE_CLIENT_EMAIL &&
-    process.env.FIREBASE_CLIENT_EMAIL !== 'your_firebase_client_email@your_project_id.iam.gserviceaccount.com' &&
-    process.env.FIREBASE_PRIVATE_KEY &&
-    !process.env.FIREBASE_PRIVATE_KEY.includes('YOUR_PRIVATE_KEY_HERE')
+    projectId &&
+    clientEmail &&
+    clientEmail !== 'your_firebase_client_email@your_project_id.iam.gserviceaccount.com' &&
+    rawPrivateKey &&
+    !rawPrivateKey.includes('YOUR_PRIVATE_KEY_HERE')
   ) {
     try {
       // Replace escaped newlines
-      const privateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n');
+      const privateKey = rawPrivateKey.replace(/\\n/g, '\n');
       return cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: privateKey,
+        projectId,
+        clientEmail,
+        privateKey,
       });
     } catch (e) {
       console.error('Error constructing credentials from env variables:', e);
